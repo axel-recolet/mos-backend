@@ -1,4 +1,4 @@
-import { Entity, ObjectID, ObjectIdColumn, Column } from "typeorm";
+import { Entity, ObjectID, ObjectIdColumn, Column } from 'typeorm';
 
 @Entity()
 export class User {
@@ -6,7 +6,7 @@ export class User {
   id: ObjectID;
 
   @Column()
-  docType: string;
+  docType: 'User';
 
   @Column()
   email: string;
