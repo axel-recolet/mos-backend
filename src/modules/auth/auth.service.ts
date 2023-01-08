@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from './dto';
+import { Exception } from '../../utils/exception';
 
 @Injectable()
 export class AuthService {
@@ -10,8 +11,8 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, pass: string): Promise<any> {
-    const user = await this.usersService.findOne(username);
+  async validateUser(email: string, pass: string): Promise<any> {
+    const user = await this.usersService.findOneByEmail(email);
     if (!user || user.password !== pass) {
       return null;
     }
@@ -27,8 +28,21 @@ export class AuthService {
     };
   }
 
-  async register(newUser: CreateUserDto): Promise<void> {
-    const { email, password } = newUser;
+  async register(createUserDto: CreateUserDto): Promise<void> {
+    const { email } = createUserDto;
+    const emailFree = await this.usersService
+      .findOneByEmail(email)
+      .then((user) => !user);
 
+    if (!emailFree) throw new EmailAlreadyUsed();
+
+    this.usersService.create(createUserDto);
+  }
+}
+
+export class EmailAlreadyUsed extends Exception {
+  constructor() {
+    super();
+    this.message = `Email already used`;
   }
 }

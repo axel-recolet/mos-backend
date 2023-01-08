@@ -392,6 +392,9 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# Docker
+docker-compose.yaml
+
 =======
 # Local
 .env

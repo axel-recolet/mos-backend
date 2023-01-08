@@ -28,7 +28,7 @@ export class AppModule {
   static async bootstrap() {
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
-    const port = configService.get('PORT');
+    const port = configService.get('port');
     await app.listen(port);
     console.log(`port :`, port);
   }
