@@ -1,26 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { LeanDocument, Model, Types } from 'mongoose';
+import { LeanDocument, Types } from 'mongoose';
+import { Email } from '../../utils/email.type';
+import { Document } from '../../utils/document';
 import { CreateUserDto } from '../auth/dto';
-import { User, UserDocument } from './user.schema';
+import { User } from './user.schema';
+import { UsersRepository } from './users.repository';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(private usersRepo: UsersRepository) {}
 
   async create(createUserDto: CreateUserDto): Promise<
     LeanDocument<User> & {
       _id: Types.ObjectId;
     }
   > {
-    const createdUser = new this.userModel(createUserDto);
-    return (await createdUser.save()).toObject();
+    return this.usersRepo.save(createUserDto);
   }
 
   async findOneByEmail(
-    email: string,
-  ): Promise<(LeanDocument<User> & { _id: Types.ObjectId }) | undefined> {
-    const user = await this.userModel.findOne({ email });
-    return user?.toObject({ versionKey: false });
+    email: Email,
+  ): Promise<Document<User> | undefined | null> {
+    return await this.usersRepo.findByEmail(email);
   }
 }
