@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { LeanDocument, Types } from 'mongoose';
 import { Email } from '../../utils/email.type';
-import { Document } from '../../utils/document';
-import { CreateUserDto } from '../auth/dto';
+import { Document } from '../../utils/document.type';
+import { SignupDto } from '../auth/dto';
 import { User } from './user.schema';
 import { UsersRepository } from './users.repository';
 
@@ -10,7 +10,7 @@ import { UsersRepository } from './users.repository';
 export class UsersService {
   constructor(private usersRepo: UsersRepository) {}
 
-  async create(createUserDto: CreateUserDto): Promise<
+  async create(createUserDto: SignupDto): Promise<
     LeanDocument<User> & {
       _id: Types.ObjectId;
     }

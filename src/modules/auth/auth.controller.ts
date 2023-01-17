@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { AuthService, EmailAlreadyUsed } from './auth.service';
-import { CreateUserDto } from './dto';
+import { SignupDto } from './dto';
 import { LocalAuthGuard } from './local-auth.guard';
 
 @Controller('auth')
@@ -18,7 +18,7 @@ export class AuthController {
 
   @HttpCode(200)
   @Put('register')
-  async register(@Body() newUser: CreateUserDto) {
+  async register(@Body() newUser: SignupDto) {
     try {
       const result = await this.authService.register(newUser);
       return result;

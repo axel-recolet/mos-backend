@@ -1,0 +1,44 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Item {
+  brand: String!
+  container: String!
+  cpf: String
+  docType: String!
+  id: String!
+  name: String!
+  unit: Unit!
+}
+
+type LoginResponse {
+  access_token: String!
+}
+
+type Mutation {
+  createStorage: Storage!
+  login(password: String!, username: String!): LoginResponse!
+  register(email: String!, password: String!): Boolean
+}
+
+type Query {
+  item(id: String!): Item
+  storage(id: String!): Storage
+}
+
+type Storage {
+  comment: String
+  containedIn: Storage
+  docType: String!
+  fillRate: Float!
+  id: String!
+  items: [Item!]!
+  name: String
+}
+
+type Unit {
+  name: String!
+  symbol: String!
+  value: Float!
+}

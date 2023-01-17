@@ -1,6 +1,6 @@
 import { User } from './user.schema';
 import { faker } from '@faker-js/faker';
-import { Document } from '../../utils/document';
+import { Document } from '../../utils/document.type';
 import mongoose from 'mongoose';
 
 export const userDocumentFake = (

@@ -10,6 +10,23 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "src/*": [
+        "src/*"
+      ],
+      "auth/*": [
+        "src/modules/auth/*"
+      ],
+      "storages/*": [
+        "src/modules/storages/*"
+      ],
+      "users/*": [
+        "src/modules/users/*"
+      ],
+      "utils/*": [
+        "src/utils/*"
+      ],
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true

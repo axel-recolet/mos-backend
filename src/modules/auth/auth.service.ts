@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserDto } from './dto';
-import { Document } from '../../utils/document';
+import { SignupDto } from './dto';
+import { Document } from '../../utils/document.type';
 import { User } from '../users/user.schema';
 import { Email } from '../../utils/email.type';
 import { EmailAlreadyUsed } from './exceptions';
@@ -37,7 +37,7 @@ export class AuthService {
     };
   }
 
-  async register(createUserDto: CreateUserDto): Promise<void> {
+  async register(createUserDto: SignupDto): Promise<void> {
     const { email } = createUserDto;
     const emailFree = await this.usersService
       .findOneByEmail(email)

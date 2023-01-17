@@ -10,6 +10,6 @@ export default () => ({
   },
   jwt: {
     secret: process.env.JWT_SECRET,
-    signOptions: { expiresIn: '60s' },
+    signOptions: { expiresIn: '600s' },
   },
 });

@@ -2,8 +2,8 @@ import { JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { Test } from '@nestjs/testing';
 import mongoose from 'mongoose';
-import { userDocumentFake } from '../users/user.fake';
-import { UsersService } from '../users/users.service';
+import { userDocumentFake } from 'users/user.fake';
+import { UsersService } from 'users/users.service';
 import { AuthService, EmailAlreadyUsed } from './auth.service';
 
 jest.mock('../users/users.service');
