@@ -29,7 +29,7 @@ import { ItemsModule } from '../items/items.module';
     }),
     AuthModule,
     StoragesModule,
-    ItemsModule,
+    //ItemsModule,
   ],
 })
 export class AppModule {

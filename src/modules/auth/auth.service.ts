@@ -3,23 +3,25 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { SignupDto } from './dto';
 import { Document } from '../../utils/document.type';
-import { User } from '../users/user.schema';
-import { Email } from '../../utils/email.type';
+import { User } from '../users/user.entity';
 import { EmailAlreadyUsed } from './exceptions';
+import { DepotsService } from '../depots/depots.service';
+import { IUser } from '../users/user.interface';
 export { EmailAlreadyUsed } from './exceptions';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
+    private readonly _usersService: UsersService,
+    private readonly _jwtService: JwtService,
+    private readonly _depotsService: DepotsService,
   ) {}
 
   async validateUser(
     email: string,
     pass: string,
-  ): Promise<Document<Omit<User, 'password'>> | undefined | null> {
-    const user = await this.usersService.findOneByEmail(email);
+  ): Promise<Omit<User, 'password'> | undefined | null> {
+    const user = await this._usersService.findByEmail(email);
     if (!user || user.password !== pass) {
       return undefined;
     }
@@ -28,23 +30,43 @@ export class AuthService {
     return result;
   }
 
-  async login(user: { email: Email; _id: string }): Promise<{
+  async login(user: Omit<IUser, 'password'>): Promise<{
     access_token: string;
   }> {
-    const payload = { username: user.email, sub: user._id };
+    const payload = {
+      username: user.email,
+      sub: user.id,
+      depots: user.depots,
+    };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this._jwtService.sign(payload),
     };
   }
 
-  async register(createUserDto: SignupDto): Promise<void> {
-    const { email } = createUserDto;
-    const emailFree = await this.usersService
-      .findOneByEmail(email)
-      .then((user) => !user);
+  async signup(createUserDto: SignupDto): Promise<void> {
+    try {
+      const { email, password, createDepot, depotsLinks } =
+        createUserDto;
+      const emailFree = await this._usersService
+        .findByEmail(email)
+        .then((user) => !user);
 
-    if (!emailFree) throw new EmailAlreadyUsed();
+      if (!emailFree) throw new EmailAlreadyUsed();
 
-    this.usersService.create(createUserDto);
+      const user = await this._usersService.create({ email, password });
+
+      await (async () => {
+        if (!createDepot) return;
+
+        return await this._depotsService.create({
+          ...createDepot,
+          creator: user.id,
+        });
+      })();
+
+      // TODO: Implements depotsLinks
+    } catch (e) {
+      throw e;
+    }
   }
 }

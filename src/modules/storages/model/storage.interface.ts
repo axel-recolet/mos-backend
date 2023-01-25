@@ -1,9 +1,10 @@
-import { DocType } from '../../../utils/docType.enum';
+import { Depot } from 'depots/depot.model';
 
-export interface IStorage {
-  docType: DocType.Storage;
-  name?: string;
+export abstract class IStorage {
+  id: string;
+  name: string;
   fillRate: number;
   comment?: string;
   containedIn?: IStorage;
+  depot: Depot;
 }

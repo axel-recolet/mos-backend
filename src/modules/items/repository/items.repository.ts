@@ -1,7 +1,8 @@
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
-import { Item } from '../model/item.model';
-import { IItemsRepository, ItemDocument } from './repository.interface';
+import { IItem } from '../model/item.interface';
+import { ItemDocument, Item } from './item.entity';
+import { IItemsRepository } from './repository.interface';
 
 export class ItemsRepository implements IItemsRepository {
   constructor(
@@ -9,7 +10,7 @@ export class ItemsRepository implements IItemsRepository {
     private readonly _itemsRepo: Model<ItemDocument>,
   ) {}
 
-  async findById(id: string): Promise<ItemDocument | undefined | null> {
+  async findById(id: string): Promise<IItem | undefined> {
     const _id = Number(id);
     if (isNaN(_id)) {
       throw new Error('Id have to be a number.');

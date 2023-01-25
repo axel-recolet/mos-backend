@@ -10,7 +10,7 @@ export class AuthResolver {
   @Mutation((returns) => Boolean, { nullable: true })
   async register(@Args() createUserDto: SignupDto) {
     try {
-      const result = await this._authService.register(createUserDto);
+      const result = await this._authService.signup(createUserDto);
       return result;
     } catch (e) {
       if (e instanceof EmailAlreadyUsed) {
@@ -28,10 +28,7 @@ export class AuthResolver {
           login.password,
         );
         if (!result) throw new UnauthorizedException();
-        return {
-          ...result,
-          _id: result?._id.toString(),
-        };
+        return result;
       })();
 
       return this._authService.login(user);

@@ -1,9 +1,0 @@
-{
-  "tasks": [
-    {
-      "command": "npm",
-      "args": ["run", "start:debug"],
-      "env"
-    }
-  ]
-}

@@ -22,6 +22,8 @@ export default {
     '^src/(.*)': ['<rootDir>'],
     '^auth/(.*)': ['<rootDir>/modules/auth/$1'],
     '^storages/(.*)': ['<rootDir>/modules/storages/$1'],
+    '^items/(.*)': ['<rootDir>/modules/items/$1'],
+    '^depots/(.*)': ['<rootDir>/modules/depots/$1'],
     '^users/(.*)': ['<rootDir>/modules/users/$1'],
     '^utils/(.*)': ['<rootDir>/utils/$1'],
   },

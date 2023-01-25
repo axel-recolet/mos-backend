@@ -2,12 +2,33 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input CreateDepotDto {
+  admins: [String!]!
+  name: String!
+  users: [String!]! = []
+}
+
+type Depot implements IDepot {
+  admins: [User!]!
+  id: ID!
+  name: String!
+  users: [User!]!
+}
+
+interface IDepot {
+  admins: [User!]!
+  id: ID!
+  name: String!
+  users: [User!]!
+}
+
 type Item {
   brand: String!
+  containedIns: [Storage!]!
   container: String!
   cpf: String
-  docType: String!
-  id: String!
+  depot: Depot!
+  id: ID!
   name: String!
   unit: Unit!
 }
@@ -17,9 +38,9 @@ type LoginResponse {
 }
 
 type Mutation {
-  createStorage: Storage!
+  createStorage(comment: String, containedIn: ID, depotId: String!, fillRate: Float = 0, name: String!): Storage
   login(password: String!, username: String!): LoginResponse!
-  register(email: String!, password: String!): Boolean
+  register(createDepot: CreateDepotDto!, depotsLinks: [String!], email: String!, password: String!): Boolean
 }
 
 type Query {
@@ -30,15 +51,21 @@ type Query {
 type Storage {
   comment: String
   containedIn: Storage
-  docType: String!
+  depot: Depot!
   fillRate: Float!
-  id: String!
+  id: ID!
   items: [Item!]!
-  name: String
+  name: String!
 }
 
 type Unit {
   name: String!
   symbol: String!
   value: Float!
+}
+
+type User {
+  depots: [Depot!]!
+  email: String!
+  id: ID!
 }

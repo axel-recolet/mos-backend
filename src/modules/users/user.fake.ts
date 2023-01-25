@@ -1,13 +1,11 @@
-import { User } from './user.schema';
 import { faker } from '@faker-js/faker';
-import { Document } from '../../utils/document.type';
 import mongoose from 'mongoose';
+import { IUser } from './user.interface';
 
-export const userDocumentFake = (
-  userDoc: Partial<Document<User>>,
-): Document<User> => ({
-  _id: new mongoose.Types.ObjectId(),
+export const userFake = (userDoc: Partial<IUser>): IUser => ({
+  id: new mongoose.Types.ObjectId().toString(),
   email: faker.internet.email(),
   password: faker.internet.password(),
+  depots: [],
   ...userDoc,
 });

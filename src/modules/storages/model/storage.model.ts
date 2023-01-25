@@ -1,18 +1,15 @@
-import { Field, ObjectType, Float } from '@nestjs/graphql';
-import { Item } from 'src/modules/items/model/item.model';
-import { DocType } from 'utils/docType.enum';
+import { Field, ObjectType, ID, Float } from '@nestjs/graphql';
+import { Depot } from 'depots/depot.model';
+import { Item } from 'items/model/item.model';
 import { IStorage } from './storage.interface';
 
 @ObjectType()
 export class Storage implements IStorage {
-  @Field()
+  @Field(() => ID)
   id: string;
 
   @Field()
-  docType: DocType.Storage;
-
-  @Field({ nullable: true })
-  name?: string;
+  name: string;
 
   @Field(() => Float)
   fillRate: number;
@@ -22,6 +19,9 @@ export class Storage implements IStorage {
 
   @Field(() => Storage, { nullable: true })
   containedIn?: Storage;
+
+  @Field()
+  depot: Depot;
 
   @Field(() => [Item])
   items: Item[];

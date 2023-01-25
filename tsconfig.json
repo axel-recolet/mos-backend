@@ -20,6 +20,12 @@
       "storages/*": [
         "src/modules/storages/*"
       ],
+      "items/*": [
+        "src/modules/items/*"
+      ],
+      "depots/*": [
+        "src/modules/depots/*"
+      ],
       "users/*": [
         "src/modules/users/*"
       ],
