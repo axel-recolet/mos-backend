@@ -1,9 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
+import { DepotEntity } from 'src/modules/depots';
 import { IDepot } from 'src/modules/depots/depot.interface';
-import { IStorage } from '../model';
+import { IStorage } from '../storage.interface';
 
-export type StorageDocument = HydratedDocument<Storage>;
+export type StorageDocument = HydratedDocument<StorageEntity>;
 
 @Schema({
   toObject: {
@@ -14,7 +15,7 @@ export type StorageDocument = HydratedDocument<Storage>;
     },
   },
 })
-export class Storage implements IStorage {
+export class StorageEntity implements IStorage {
   id!: string;
 
   @Prop({ type: String, required: true })
@@ -32,8 +33,8 @@ export class Storage implements IStorage {
   })
   containedIns?: Storage[];
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Depot' })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'DepotEntity' })
   depot: IDepot;
 }
 
-export const StorageSchema = SchemaFactory.createForClass(Storage);
+export const StorageSchema = SchemaFactory.createForClass(StorageEntity);

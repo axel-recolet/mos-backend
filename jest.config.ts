@@ -1,6 +1,10 @@
+import { pathsToModuleNameMapper } from 'ts-jest';
+import { readFileSync } from 'fs';
+const { compilerOptions } = JSON.parse(readFileSync('tsconfig.json', 'utf-8'));
+
 export default {
   moduleFileExtensions: ['js', 'json', 'ts'],
-  rootDir: 'src',
+  rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
@@ -18,13 +22,7 @@ export default {
   ],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
-  moduleNameMapper: {
-    '^src/(.*)': ['<rootDir>'],
-    '^auth/(.*)': ['<rootDir>/modules/auth/$1'],
-    '^storages/(.*)': ['<rootDir>/modules/storages/$1'],
-    '^items/(.*)': ['<rootDir>/modules/items/$1'],
-    '^depots/(.*)': ['<rootDir>/modules/depots/$1'],
-    '^users/(.*)': ['<rootDir>/modules/users/$1'],
-    '^utils/(.*)': ['<rootDir>/utils/$1'],
-  },
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+    prefix: '<rootDir>/',
+  }),
 };

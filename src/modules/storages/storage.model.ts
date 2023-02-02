@@ -20,7 +20,7 @@ export class Storage implements IStorage {
   @Field(() => Storage, { nullable: true })
   containedIn?: Storage;
 
-  @Field()
+  @Field(() => Depot)
   depot: Depot;
 
   @Field(() => [Item])

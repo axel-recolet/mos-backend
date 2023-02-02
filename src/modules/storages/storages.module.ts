@@ -1,24 +1,28 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AbilityModule } from '../ability/ability.module';
-import { AbilityService } from '../ability/ability.service';
-import { ItemsModule } from '../items/items.module';
-import { Storage, StorageSchema } from './repository/storage.schema';
-import { StoragesRepository } from './repository/storages.repository';
+import { ItemsModule } from 'items';
+import { PermissionsService } from '../permissions/permissions.service';
+import { PermissionsModule } from '../permissions/premissions.module';
+import { UsersModule } from '../users';
+import { StorageEntity, StorageSchema } from './repository/storage.entity';
+import { StoragesRepository } from './repository/storages.mongodb.repository';
 import { StoragesResolver } from './storages.resolver';
 import { StoragesService } from './storages.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Storage.name, schema: StorageSchema }]),
-    AbilityModule,
+    MongooseModule.forFeature([
+      { name: StorageEntity.name, schema: StorageSchema },
+    ]),
+    PermissionsModule,
+    UsersModule,
     ItemsModule,
   ],
   providers: [
     StoragesRepository,
     StoragesService,
     StoragesResolver,
-    AbilityService,
+    PermissionsService,
   ],
 })
 export class StoragesModule {}

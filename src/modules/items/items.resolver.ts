@@ -11,6 +11,6 @@ export class ItemsResolver {
   async getItem(
     @Args('id', { type: () => String }) id: string,
   ): Promise<IItem | undefined> {
-    return this.itemsService.findOneById(id);
+    return this.itemsService.findById(id);
   }
 }

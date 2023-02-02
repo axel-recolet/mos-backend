@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { isEmail } from 'class-validator';
+import * as moment from 'moment';
 import { UsersService } from 'users/users.service';
+import { IJwtUser } from '../auth';
+import { PermissionsService } from '../permissions/permissions.service';
+import { IDepot } from './depot.interface';
 import { Depot } from './depot.model';
 import { CreateDepotDto } from './dto';
 import { DepotsRepository } from './repository';
@@ -10,13 +15,17 @@ export class DepotsService {
   constructor(
     private readonly _depotsRepo: DepotsRepository,
     private readonly _usersService: UsersService,
+    private readonly _permissionsService: PermissionsService,
   ) {}
 
   async create(
     createDepotDto: CreateDepotDto & { creator: string },
-  ): Promise<Depot> {
+    user: IJwtUser,
+  ): Promise<IDepot> {
     try {
-      const result = await (async () => {
+      await this._permissionsService.createDepot(user, createDepotDto);
+
+      const result: IDepot = await (async () => {
         const toId = async (idOrEmail: string): Promise<string | undefined> => {
           if (isEmail(idOrEmail)) {
             const user = await this._usersService.findByEmail(idOrEmail);
@@ -37,6 +46,7 @@ export class DepotsService {
 
         const [adminIds, userIds] = await (async () => {
           const ids: Promise<string | undefined>[][] = [[], []];
+
           for (const admin of admins) {
             ids[0].push(toId(admin));
           }
@@ -59,15 +69,18 @@ export class DepotsService {
 
         adminIds.add(creator);
 
-        return {
+        const result = {
           creator: creatorId,
           admins: Array.from(adminIds),
           users: Array.from(userIds),
+          dueDate: moment().toISOString(),
           ...rest,
         };
+
+        return await this._depotsRepo.create(result);
       })();
 
-      return await this._depotsRepo.create(result);
+      return result;
     } catch (e) {
       throw e;
     }

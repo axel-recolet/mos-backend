@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
 import { IDepot } from 'src/modules/depots/depot.interface';
-import { IStorage } from 'src/modules/storages/model';
+import { IStorage } from 'storages/storage.interface';
 import { IItem } from '../model/item.interface';
 import { Unit } from '../model/unit.model';
 

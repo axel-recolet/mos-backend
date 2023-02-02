@@ -17,17 +17,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any): Promise<IJtwUser> {
-    return {
-      userId: payload.sub,
-      username: payload.username,
-      depots: payload.depots,
-    };
+  async validate(payload: any): Promise<IJwtUser> {
+    const { id, email, depots } = payload;
+    return { id, email, depots };
   }
 }
 
-export interface IJtwUser {
-  userId: string;
-  username: string;
+export interface IJwtUser {
+  id: string;
+  email: string;
   depots: IDepot[];
 }

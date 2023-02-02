@@ -1,8 +1,6 @@
-import { IStorage } from '../model/storage.interface';
-
-export type StorageDocument = IStorage & { _id: string };
+import { IStorage } from '../storage.interface';
 
 export interface IStoragesRepository {
-  findOneById(id: string): Promise<StorageDocument | undefined | null>;
-  find(filter: Partial<StorageDocument>): Promise<StorageDocument[]>;
+  findById(id: string): Promise<IStorage | undefined>;
+  find(filter: Partial<IStorage>): Promise<IStorage[]>;
 }

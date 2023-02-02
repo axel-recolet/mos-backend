@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Email } from '../../utils/email.type';
-import { Document } from '../../utils/document.type';
 import { SignupDto } from '../auth/dto';
-import { User } from './user.entity';
 import { UsersRepository } from './users.repository';
 import { IUser } from './user.interface';
 
@@ -18,7 +16,7 @@ export class UsersService {
     }
   }
 
-  async findByEmail(email: Email): Promise<IUser | undefined | null> {
+  async findByEmail(email: Email): Promise<IUser | undefined> {
     try {
       return await this._usersRepo.findByEmail(email);
     } catch (e) {
@@ -26,7 +24,7 @@ export class UsersService {
     }
   }
 
-  async findById(id: string): Promise<IUser | undefined | null> {
+  async findById(id: string): Promise<IUser | undefined> {
     try {
       return this._usersRepo.findById(id);
     } catch (error) {

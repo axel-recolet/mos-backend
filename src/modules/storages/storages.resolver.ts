@@ -9,12 +9,12 @@ import {
 } from '@nestjs/graphql';
 import { GqlAuthGuard } from 'auth/gql-jwt-auth.guard';
 import { User } from 'utils/user.decorator';
-import { IJtwUser } from '../auth/jwt.strategy';
+import { IJwtUser } from '../auth/jwt.strategy';
 import { ItemsService } from '../items/items.service';
 import { Item } from '../items/model/item.model';
 import { CreateStorageDto } from './dto/storage.dto';
-import { Storage } from './model/storage.model';
-import { StorageDocument } from './repository/repository.interface';
+import { IStorage } from './storage.interface';
+import { Storage } from './storage.model';
 import { StoragesService } from './storages.service';
 
 @Resolver((of) => Storage)
@@ -29,14 +29,14 @@ export class StoragesResolver {
   async getStorage(
     @User() user: any,
     @Args('id', { type: () => String }) id: string,
-  ): Promise<StorageDocument | undefined | null> {
-    return this._storagesService.findOneById(id);
+  ): Promise<IStorage | undefined> {
+    return this._storagesService.findById(id);
   }
 
   @Mutation((returns) => Storage, { nullable: true })
   @UseGuards(GqlAuthGuard)
   async createStorage(
-    @User() user: IJtwUser,
+    @User() user: IJwtUser,
     @Args() storage: CreateStorageDto,
   ) {
     try {
@@ -49,6 +49,6 @@ export class StoragesResolver {
   @ResolveField('items', (returns) => [Item])
   async getItems(@Parent() storage: Storage) {
     const { id } = storage;
-    return this._itemsService.findOneById(id);
+    return this._itemsService.findById(id);
   }
 }

@@ -1,5 +1,6 @@
 import { Email } from 'utils/email.type';
 import { IDepot } from 'depots/depot.interface';
+import { ICreditCard } from './creditCard.interface';
 
 export abstract class IUser {
   id: string;
@@ -9,4 +10,6 @@ export abstract class IUser {
   password: string;
 
   depots: IDepot[];
+
+  creditCard?: ICreditCard;
 }

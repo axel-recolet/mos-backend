@@ -9,6 +9,9 @@ import configuration from '../../configuration';
 import { AuthModule } from 'auth/auth.module';
 import { StoragesModule } from '../storages/storages.module';
 import { ItemsModule } from '../items/items.module';
+import { DepotsModule } from '../depots';
+import { UsersModule } from '../users';
+import { PermissionsModule } from '../permissions/premissions.module';
 
 @Module({
   imports: [
@@ -27,9 +30,12 @@ import { ItemsModule } from '../items/items.module';
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
     }),
+    DepotsModule,
+    PermissionsModule,
     AuthModule,
+    UsersModule,
     StoragesModule,
-    //ItemsModule,
+    ItemsModule,
   ],
 })
 export class AppModule {

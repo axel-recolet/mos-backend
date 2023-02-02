@@ -1,22 +1,26 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User } from 'users/user.entity';
-import { UsersModule } from '../users/users.module';
-import { UsersRepository } from '../users/users.repository';
+import { UsersModule } from 'users/users.module';
+import { PermissionsService } from '../permissions/permissions.service';
+import { PermissionsModule } from '../permissions/premissions.module';
 import { UsersService } from '../users/users.service';
 import { DepotsService } from './depots.service';
-import {
-  DepotEntity as Depot,
-  depotSchema,
-  DepotsRepository,
-} from './repository';
+import { DepotEntity, depotSchema, DepotsRepository } from './repository';
 
 @Module({
   imports: [
+    MongooseModule.forFeature([
+      { name: DepotEntity.name, schema: depotSchema },
+    ]),
     UsersModule,
-    MongooseModule.forFeature([{ name: Depot.name, schema: depotSchema }]),
+    PermissionsModule,
   ],
-  providers: [UsersService, DepotsService, DepotsRepository],
+  providers: [
+    DepotsRepository,
+    DepotsService,
+    UsersService,
+    PermissionsService,
+  ],
   exports: [DepotsService, DepotsRepository],
 })
 export class DepotsModule {}

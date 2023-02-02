@@ -1,3 +1,3 @@
 export * from './depotsRepository.interface';
-export * from './depots.repository';
+export * from './depots.mongodb.repository';
 export * from './depot.entity';

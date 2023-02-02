@@ -1,4 +1,4 @@
-import { Depot } from 'depots/depot.model';
+import { IDepot } from '../depots';
 
 export abstract class IStorage {
   id: string;
@@ -6,5 +6,5 @@ export abstract class IStorage {
   fillRate: number;
   comment?: string;
   containedIn?: IStorage;
-  depot: Depot;
+  depot: IDepot;
 }

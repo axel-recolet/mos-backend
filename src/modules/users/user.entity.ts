@@ -4,19 +4,26 @@ import mongoose, { HydratedDocument } from 'mongoose';
 import { Email } from 'utils/email.type';
 import { IDepot } from 'depots/depot.interface';
 import { IUser } from './user.interface';
+import { ICreditCard } from './creditCard.interface';
 
-export type UserDocument = HydratedDocument<User>;
+export class CreditCardEntity implements ICreditCard {
+  @Prop({ required: true, type: String })
+  id: string;
+}
+
+export type UserDocument = HydratedDocument<UserEntity>;
 
 @Schema({
   toObject: {
     versionKey: false,
     transform(doc, ret, options) {
-      const { _id: id, ...rest } = doc;
-      return { id, rest };
+      const { _id, ...rest } = ret;
+      const id = _id.toString();
+      return { id, ...rest };
     },
   },
 })
-export class User implements IUser {
+export class UserEntity implements IUser {
   id: string;
 
   @Prop({
@@ -43,6 +50,9 @@ export class User implements IUser {
     ],
   })
   depots: IDepot[];
+
+  @Prop({ required: false, type: CreditCardEntity })
+  creditCard?: ICreditCard;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(UserEntity);

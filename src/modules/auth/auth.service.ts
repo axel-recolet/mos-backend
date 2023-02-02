@@ -1,12 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { SignupDto } from './dto';
-import { Document } from '../../utils/document.type';
-import { User } from '../users/user.entity';
 import { EmailAlreadyUsed } from './exceptions';
 import { DepotsService } from '../depots/depots.service';
 import { IUser } from '../users/user.interface';
+import { IJwtUser } from './jwt.strategy';
 export { EmailAlreadyUsed } from './exceptions';
 
 @Injectable()
@@ -20,7 +19,7 @@ export class AuthService {
   async validateUser(
     email: string,
     pass: string,
-  ): Promise<Omit<User, 'password'> | undefined | null> {
+  ): Promise<Omit<IUser, 'password'> | undefined> {
     const user = await this._usersService.findByEmail(email);
     if (!user || user.password !== pass) {
       return undefined;
@@ -33,20 +32,22 @@ export class AuthService {
   async login(user: Omit<IUser, 'password'>): Promise<{
     access_token: string;
   }> {
+    const { id, email, depots } = user;
     const payload = {
-      username: user.email,
-      sub: user.id,
-      depots: user.depots,
+      id,
+      email,
+      depots,
     };
     return {
       access_token: this._jwtService.sign(payload),
     };
   }
 
-  async signup(createUserDto: SignupDto): Promise<void> {
+  async signup(createUserDto: SignupDto): Promise<IUser> {
     try {
-      const { email, password, createDepot, depotsLinks } =
+      const { email, password, creditCard, createDepot, depotsLinks } =
         createUserDto;
+
       const emailFree = await this._usersService
         .findByEmail(email)
         .then((user) => !user);
@@ -55,15 +56,27 @@ export class AuthService {
 
       const user = await this._usersService.create({ email, password });
 
-      await (async () => {
-        if (!createDepot) return;
+      const depot = await (async () => {
+        if (!createDepot || !creditCard) return;
 
-        return await this._depotsService.create({
-          ...createDepot,
-          creator: user.id,
-        });
+        return await this._depotsService.create(
+          {
+            ...createDepot,
+            creator: user.id,
+          },
+          {
+            id: user.id,
+            email: user.email,
+            depots: [],
+          },
+        );
       })();
 
+      if (depot) {
+        user.depots.push(depot);
+      }
+
+      return user;
       // TODO: Implements depotsLinks
     } catch (e) {
       throw e;

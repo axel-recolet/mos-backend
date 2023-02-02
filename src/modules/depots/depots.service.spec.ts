@@ -6,34 +6,58 @@ import { DepotsService } from './depots.service';
 import { DepotsRepository } from './repository';
 import { CreateDepotDto } from './dto';
 import { plainToInstance } from 'class-transformer';
-import { User } from 'users/user.entity';
+import { UserEntity } from 'users/user.entity';
 import { UsersService } from 'users/users.service';
+import { IUser } from '../users';
+import * as moment from 'moment';
+import { IJwtUser } from '../auth';
+import { PermissionsService } from '../permissions/permissions.service';
 
 jest.mock('./repository');
 jest.mock('users/users.service');
+jest.mock('../permissions/permissions.service');
+jest.mock('../permissions/user.permissions');
 
 describe('DepotsService', () => {
   let depotsService: DepotsService;
   let depotsRepo: DepotsRepository;
   let usersService: UsersService;
+  let permisService: PermissionsService;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const moduleRef = await Test.createTestingModule({
-      providers: [DepotsService, DepotsRepository, UsersService],
+      providers: [
+        DepotsService,
+        DepotsRepository,
+        UsersService,
+        PermissionsService,
+      ],
     }).compile();
 
     depotsService = moduleRef.get(DepotsService);
     depotsRepo = moduleRef.get(DepotsRepository);
     usersService = moduleRef.get(UsersService);
+    permisService = moduleRef.get(PermissionsService);
   });
 
   describe('create', () => {
-    let creator: string;
+    let creator: IUser;
+    let user: IJwtUser;
     let createDepotDto: CreateDepotDto;
     let depotEntity: IDepot;
 
     beforeEach(async () => {
-      creator = faker.datatype.uuid();
+      jest.clearAllMocks();
+
+      creator = userFake({ id: faker.datatype.uuid() });
+
+      user = {
+        id: creator.id,
+        email: creator.email,
+        depots: creator.depots,
+      };
 
       createDepotDto = plainToInstance(CreateDepotDto, {
         name: faker.company.name(),
@@ -44,28 +68,30 @@ describe('DepotsService', () => {
       depotEntity = {
         id: faker.datatype.uuid(),
         ...createDepotDto,
+        creator,
         admins: (() => {
-          const result: User[] = [];
+          const result: UserEntity[] = [];
           for (const email of createDepotDto.admins) {
             result.push(userFake({ email }));
           }
-          if (creator) result.push(userFake({ id: creator }));
+          if (creator) result.push(creator);
           return result;
         })(),
         users: (() => {
-          const result: User[] = [];
+          const result: UserEntity[] = [];
           for (const email of createDepotDto.users) {
             result.push(userFake({ email }));
           }
           return result;
         })(),
+        dueDate: moment().add(1, 'months'),
       };
     });
 
     it('should create depot', async () => {
       const usersServiceFindByIdSpy = jest
         .spyOn(usersService, 'findById')
-        .mockResolvedValue(userFake({ id: creator }));
+        .mockResolvedValue(creator);
 
       const usersServiceFindByEmailSpy = jest
         .spyOn(usersService, 'findByEmail')
@@ -76,12 +102,19 @@ describe('DepotsService', () => {
         .spyOn(depotsRepo, 'create')
         .mockResolvedValue(depotEntity);
 
-      const result = await depotsService.create({
-        creator,
-        ...createDepotDto,
-      });
+      const permisServiceSpy = jest
+        .spyOn(permisService, 'createDepot')
+        .mockResolvedValue(true);
 
-      expect(usersServiceFindByIdSpy).toHaveBeenCalledWith(creator);
+      const result = await depotsService.create(
+        {
+          creator: creator.id,
+          ...createDepotDto,
+        },
+        user,
+      );
+
+      expect(usersServiceFindByIdSpy).toHaveBeenCalledWith(creator.id);
       expect(usersServiceFindByEmailSpy).toHaveBeenCalledTimes(2);
       expect(result).toEqual(depotEntity);
     });
@@ -91,10 +124,13 @@ describe('DepotsService', () => {
         .spyOn(usersService, 'findById')
         .mockResolvedValue(undefined);
 
-      const result = depotsService.create({
-        creator,
-        ...createDepotDto,
-      });
+      const result = depotsService.create(
+        {
+          creator: creator.id,
+          ...createDepotDto,
+        },
+        user,
+      );
 
       expect(result).rejects.toThrow();
     });
@@ -102,7 +138,7 @@ describe('DepotsService', () => {
     it('should not add admin when his Email not exists', async () => {
       const usersServiceFindByIdSpy = jest
         .spyOn(usersService, 'findById')
-        .mockResolvedValue(userFake({ id: creator }));
+        .mockResolvedValue(creator);
 
       const usersServiceFindByEmailSpy = jest
         .spyOn(usersService, 'findByEmail')
@@ -113,17 +149,22 @@ describe('DepotsService', () => {
         .spyOn(depotsRepo, 'create')
         .mockResolvedValue({ ...depotEntity, admins: [] });
 
+      const UserPermisServiceSpy = jest
+        .spyOn(permisService, 'createDepot')
+        .mockResolvedValue(true);
+
       const depot: CreateDepotDto & { creator: string } = {
-        creator,
+        creator: creator.id,
         ...createDepotDto,
       };
 
-      const result = await depotsService.create(depot);
+      const result = await depotsService.create(depot, user);
 
       expect(repoCreateSpy).toHaveBeenCalledWith({
         ...depot,
-        admins: [creator],
+        admins: [creator.id],
         users: depotEntity.users.map((user) => user.id),
+        dueDate: moment().toISOString(),
       });
     });
   });

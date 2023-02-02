@@ -1,5 +1,5 @@
 import { IDepot } from 'src/modules/depots/depot.interface';
-import { IStorage } from 'src/modules/storages/model';
+import { IStorage } from 'storages';
 import { Unit } from './unit.model';
 
 export interface IItem {

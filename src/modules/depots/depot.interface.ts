@@ -1,18 +1,11 @@
-import { Field, ID, InterfaceType } from '@nestjs/graphql';
-import { User } from 'users/user.model';
+import { Moment } from 'moment';
 import { IUser } from 'users/user.interface';
 
-@InterfaceType({ isAbstract: true })
-export abstract class IDepot {
-  @Field(() => ID)
+export interface IDepot {
   id: string;
-
-  @Field(() => String)
   name: string;
-
-  @Field(() => [User])
+  creator: IUser;
   admins: IUser[];
-
-  @Field(() => [User])
   users: IUser[];
+  dueDate: Moment;
 }

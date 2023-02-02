@@ -7,5 +7,8 @@ export const userFake = (userDoc: Partial<IUser>): IUser => ({
   email: faker.internet.email(),
   password: faker.internet.password(),
   depots: [],
+  creditCard: {
+    id: 'ljnsdflkjn',
+  },
   ...userDoc,
 });

@@ -1,5 +1,6 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { User } from '../users';
 import { AuthService, EmailAlreadyUsed } from './auth.service';
 import { SignupDto, LoginResponse, LoginDto } from './dto';
 
@@ -7,8 +8,8 @@ import { SignupDto, LoginResponse, LoginDto } from './dto';
 export class AuthResolver {
   constructor(private readonly _authService: AuthService) {}
 
-  @Mutation((returns) => Boolean, { nullable: true })
-  async register(@Args() createUserDto: SignupDto) {
+  @Mutation((returns) => User, { nullable: true })
+  async signup(@Args() createUserDto: SignupDto) {
     try {
       const result = await this._authService.signup(createUserDto);
       return result;

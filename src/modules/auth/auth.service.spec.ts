@@ -44,7 +44,7 @@ describe('AuthService', () => {
     });
 
     it("Email doesn't exist", async () => {
-      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(null);
+      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(undefined);
       const result = authService.validateUser(email, pass);
       expect(result).resolves.toBeUndefined();
     });

@@ -399,3 +399,6 @@ docker-compose.yaml
 # Local
 .env
 dist
+
+# MongoDB test db
+test/data

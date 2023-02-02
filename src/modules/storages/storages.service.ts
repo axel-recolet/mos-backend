@@ -1,37 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import { ForbiddenError } from '@casl/ability';
-import { AbilityService } from '../ability/ability.service';
-import { Action } from '../ability/action.enum';
-import { IJtwUser } from '../auth/jwt.strategy';
+import { IJwtUser } from '../auth/jwt.strategy';
 import { CreateStorageDto } from './dto/storage.dto';
-import { StorageDocument } from './repository/repository.interface';
-import { StoragesRepository } from './repository/storages.repository';
-import { IStorage } from './model';
+import { StoragesRepository } from './repository/storages.mongodb.repository';
+import { IStorage } from './storage.interface';
+import { PermissionsService } from '../permissions/permissions.service';
 
 @Injectable()
 export class StoragesService {
   constructor(
     private readonly _storagesRepo: StoragesRepository,
-    private readonly _abilityService: AbilityService,
+    private readonly _permisService: PermissionsService,
   ) {}
 
-  async findOneById(id: string): Promise<StorageDocument | null | undefined> {
-    return await this._storagesRepo.findOneById(id);
-  }
-
-  async find(filter: Partial<StorageDocument>): Promise<StorageDocument[]> {
-    return this._storagesRepo.find(filter);
-  }
-
-  async create(storage: CreateStorageDto, user: IJtwUser): Promise<IStorage> {
+  async findById(id: string): Promise<IStorage | undefined> {
     try {
-      const ability = this._abilityService.createForUser(user);
-      console.log(ability.relevantRuleFor(Action.Create, storage));
-      ForbiddenError.from(ability).throwUnlessCan(Action.Create, storage);
+      return await this._storagesRepo.findById(id);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async find(filter: Partial<IStorage>): Promise<IStorage[]> {
+    try {
+      return this._storagesRepo.find(filter);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async create(storage: CreateStorageDto, user: IJwtUser): Promise<IStorage> {
+    try {
+      //const ability = this._permisService.from(user);
       const storageDoc = await this._storagesRepo.create(storage);
       return storageDoc;
-    } catch (e) {
-      throw e;
+    } catch (error) {
+      throw error;
     }
   }
 }
