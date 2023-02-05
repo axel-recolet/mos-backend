@@ -1,6 +1,6 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
-import { User } from '../users';
+import { IUser, User } from '../users';
 import { AuthService, EmailAlreadyUsed } from './auth.service';
 import { SignupDto, LoginResponse, LoginDto } from './dto';
 
@@ -9,7 +9,9 @@ export class AuthResolver {
   constructor(private readonly _authService: AuthService) {}
 
   @Mutation((returns) => User, { nullable: true })
-  async signup(@Args() createUserDto: SignupDto) {
+  async signup(
+    @Args() createUserDto: SignupDto,
+  ): Promise<Omit<IUser, 'password' | 'creditCard'>> {
     try {
       const result = await this._authService.signup(createUserDto);
       return result;
@@ -17,6 +19,7 @@ export class AuthResolver {
       if (e instanceof EmailAlreadyUsed) {
         throw new BadRequestException(e.message);
       }
+      throw e.message;
     }
   }
 

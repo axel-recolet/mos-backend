@@ -26,8 +26,9 @@ describe('UsersService', () => {
         password: 'sdlkjnerpoihsfd',
       };
       const saveSpy = jest
-        .spyOn(usersRepo, 'save')
+        .spyOn(usersRepo, 'create')
         .mockResolvedValue(userFake(createdUserDto));
+
       const result = await usersService.create(createdUserDto);
       expect(saveSpy).toBeCalled();
     });

@@ -1,9 +1,15 @@
+import { connection } from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // This will create an new instance of "MongoMemoryServer" and automatically start it
-const mongod = await MongoMemoryServer.create();
+let mongoServer: MongoMemoryServer;
 
-const uri = mongod.getUri();
+export async function dbConnect(uri: string) {
+  mongoServer = await MongoMemoryServer.create();
+}
 
-// The Server can be stopped again with
-await mongod.stop();
+export async function dbDisconnect() {
+  await connection.dropDatabase();
+  await connection.close();
+  await mongoServer.stop();
+}

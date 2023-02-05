@@ -17,6 +17,5 @@ export class User implements IUser {
   @Field(() => [Depot])
   depots: Depot[];
 
-  @Field(() => CreditCard, { nullable: false })
   creditCard?: CreditCard;
 }

@@ -41,17 +41,18 @@ export class UserEntity implements IUser {
   password: string;
 
   @Prop({
-    required: true,
+    required: false,
     type: [
       {
         type: mongoose.Types.ObjectId,
         ref: 'Depot',
       },
     ],
+    default: [],
   })
   depots: IDepot[];
 
-  @Prop({ required: false, type: CreditCardEntity })
+  @Prop({ required: false, type: CreditCardEntity, default: undefined })
   creditCard?: ICreditCard;
 }
 

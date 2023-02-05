@@ -3,6 +3,7 @@ import { Email } from '../../utils/email.type';
 import { SignupDto } from '../auth/dto';
 import { UsersRepository } from './users.repository';
 import { IUser } from './user.interface';
+import { CreateCreditCardDto } from '../auth/dto/creditCard.dto';
 
 @Injectable()
 export class UsersService {
@@ -10,7 +11,26 @@ export class UsersService {
 
   async create(createUserDto: SignupDto): Promise<IUser> {
     try {
-      return this._usersRepo.save(createUserDto);
+      return this._usersRepo.create(createUserDto);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateCreditCard(
+    id: string,
+    creditCard: CreateCreditCardDto | undefined,
+  ): Promise<IUser | undefined> {
+    try {
+      return this._usersRepo.updateCreditCard(id, creditCard);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addDepot(id: string, depotId: string): Promise<IUser | undefined> {
+    try {
+      return await this._usersRepo.addDepot(id, depotId);
     } catch (error) {
       throw error;
     }

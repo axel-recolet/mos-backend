@@ -6,6 +6,7 @@ import { faker } from '@faker-js/faker';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
+
   const user = {
     email: faker.internet.email(),
     password: faker.internet.password(),
@@ -22,6 +23,10 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  afterAll(async () => {
+    await app.close();
+  });
+
   // it('/ (GET)', () => {
   //   return request(app.getHttpServer())
   //     .get('/')
@@ -29,22 +34,35 @@ describe('AppController (e2e)', () => {
   //     .expect('Hello World!');
   // });
 
-  it('signingUp /graphql', () => {
+  it('signingUp /graphql', async () => {
     return request(app.getHttpServer())
       .post('/graphql')
       .send({
-        mutation: `{
-        register(
-          email: ${user.email},
-          password: "${user.password}"
-        ) {
-          access_token
-        }
-      }`,
+        query: `mutation {
+          signup(
+            email: "${user.email}",
+            password: "${user.email}",
+          ) {
+            email
+          }
+        }`,
       })
-      .expect(200)
-      .end((err, res) => {
-        if (err) throw err;
-      });
+      .expect(200);
+  });
+
+  it('login /graphql', async () => {
+    return request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: `mutation {
+          login(
+            username: "${user.email}",
+            password: "${user.password}"
+          ) {
+            access_token
+          }
+        }`,
+      })
+      .expect(200);
   });
 });

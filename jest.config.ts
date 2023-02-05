@@ -10,8 +10,10 @@ export default {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
   collectCoverageFrom: [
-    '**/*.(t|j)s',
-    '!main.(t|j)s',
+    'src/**/*.(t|j)s',
+    '!src/main.(t|j)s',
+    '!**/index.(t|j)s',
+    '!**/*.resolver.(t|j)s',
     '!**/*.module.(t|j)s',
     '!**/*.input.(t|j)s',
     '!**/*.entity.(t|j)s',

@@ -1,12 +1,18 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { SignupDto } from './dto';
 import { EmailAlreadyUsed } from './exceptions';
 import { DepotsService } from '../depots/depots.service';
 import { IUser } from '../users/user.interface';
-import { IJwtUser } from './jwt.strategy';
+import { IDepot } from '../depots';
 export { EmailAlreadyUsed } from './exceptions';
+
+export type SafeUser = {
+  id: string;
+  email: string;
+  depots: IDepot[];
+};
 
 @Injectable()
 export class AuthService {
@@ -19,34 +25,38 @@ export class AuthService {
   async validateUser(
     email: string,
     pass: string,
-  ): Promise<Omit<IUser, 'password'> | undefined> {
-    const user = await this._usersService.findByEmail(email);
-    if (!user || user.password !== pass) {
-      return undefined;
+  ): Promise<SafeUser | undefined> {
+    try {
+      const user = await this._usersService.findByEmail(email);
+      if (!user || user.password !== pass) {
+        return undefined;
+      }
+
+      return (() => {
+        const { id, email, depots } = user;
+        return { id, email, depots };
+      })();
+    } catch (error) {
+      throw error;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
-    return result;
   }
 
   async login(user: Omit<IUser, 'password'>): Promise<{
     access_token: string;
   }> {
-    const { id, email, depots } = user;
-    const payload = {
-      id,
-      email,
-      depots,
-    };
-    return {
-      access_token: this._jwtService.sign(payload),
-    };
+    try {
+      const { id, email, depots } = user;
+      return {
+        access_token: this._jwtService.sign({ id, email, depots }),
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async signup(createUserDto: SignupDto): Promise<IUser> {
+  async signup(createUserDto: SignupDto): Promise<SafeUser> {
     try {
-      const { email, password, creditCard, createDepot, depotsLinks } =
-        createUserDto;
+      const { email } = createUserDto;
 
       const emailFree = await this._usersService
         .findByEmail(email)
@@ -54,30 +64,13 @@ export class AuthService {
 
       if (!emailFree) throw new EmailAlreadyUsed();
 
-      const user = await this._usersService.create({ email, password });
-
-      const depot = await (async () => {
-        if (!createDepot || !creditCard) return;
-
-        return await this._depotsService.create(
-          {
-            ...createDepot,
-            creator: user.id,
-          },
-          {
-            id: user.id,
-            email: user.email,
-            depots: [],
-          },
+      return await (async () => {
+        const { id, email, depots } = await this._usersService.create(
+          createUserDto,
         );
+
+        return { id, email, depots };
       })();
-
-      if (depot) {
-        user.depots.push(depot);
-      }
-
-      return user;
-      // TODO: Implements depotsLinks
     } catch (e) {
       throw e;
     }

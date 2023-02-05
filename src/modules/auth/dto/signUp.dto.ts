@@ -13,14 +13,4 @@ export class SignupDto {
   @Field(() => String)
   @IsNotEmpty()
   password: string;
-
-  @Field(() => CreateCreditCardDto, { nullable: true })
-  creditCard?: CreateCreditCardDto;
-
-  @Field(() => CreateDepotDto, { nullable: true, defaultValue: true })
-  @ValidateNested()
-  createDepot?: CreateDepotDto;
-
-  @Field(() => [String], { nullable: true })
-  depotsLinks?: string[];
 }

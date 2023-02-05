@@ -11,18 +11,17 @@ import { UsersService } from 'users/users.service';
 import { IUser } from '../users';
 import * as moment from 'moment';
 import { IJwtUser } from '../auth';
-import { PermissionsService } from '../permissions/permissions.service';
+import { DepotsPermission } from './depots.permission';
 
 jest.mock('./repository');
 jest.mock('users/users.service');
 jest.mock('../permissions/permissions.service');
-jest.mock('../permissions/user.permissions');
 
 describe('DepotsService', () => {
   let depotsService: DepotsService;
   let depotsRepo: DepotsRepository;
   let usersService: UsersService;
-  let permisService: PermissionsService;
+  let permisService: DepotsPermission;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -32,14 +31,14 @@ describe('DepotsService', () => {
         DepotsService,
         DepotsRepository,
         UsersService,
-        PermissionsService,
+        DepotsPermission,
       ],
     }).compile();
 
     depotsService = moduleRef.get(DepotsService);
     depotsRepo = moduleRef.get(DepotsRepository);
     usersService = moduleRef.get(UsersService);
-    permisService = moduleRef.get(PermissionsService);
+    permisService = moduleRef.get(DepotsPermission);
   });
 
   describe('create', () => {
