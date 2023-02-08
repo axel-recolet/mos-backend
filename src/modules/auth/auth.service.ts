@@ -1,50 +1,78 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserDto } from './dto';
-import { Document } from '../../utils/document';
-import { User } from '../users/user.schema';
-import { Email } from '../../utils/email.type';
+import { SignupDto } from './dto';
 import { EmailAlreadyUsed } from './exceptions';
+import { DepotsService } from '../depots/depots.service';
+import { IUser } from '../users/user.interface';
+import { IDepot } from '../depots';
 export { EmailAlreadyUsed } from './exceptions';
+
+export type SafeUser = {
+  id: string;
+  email: string;
+  depots: IDepot[];
+};
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
+    private readonly _usersService: UsersService,
+    private readonly _jwtService: JwtService,
+    private readonly _depotsService: DepotsService,
   ) {}
 
   async validateUser(
     email: string,
     pass: string,
-  ): Promise<Document<Omit<User, 'password'>> | undefined | null> {
-    const user = await this.usersService.findOneByEmail(email);
-    if (!user || user.password !== pass) {
-      return undefined;
+  ): Promise<SafeUser | undefined> {
+    try {
+      const user = await this._usersService.findByEmail(email);
+      if (!user || user.password !== pass) {
+        return undefined;
+      }
+
+      return (() => {
+        const { id, email, depots } = user;
+        return { id, email, depots };
+      })();
+    } catch (error) {
+      throw error;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
-    return result;
   }
 
-  async login(user: { email: Email; _id: string }): Promise<{
+  async login(user: Omit<IUser, 'password'>): Promise<{
     access_token: string;
   }> {
-    const payload = { username: user.email, sub: user._id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    try {
+      const { id, email, depots } = user;
+      return {
+        access_token: this._jwtService.sign({ id, email, depots }),
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async register(createUserDto: CreateUserDto): Promise<void> {
-    const { email } = createUserDto;
-    const emailFree = await this.usersService
-      .findOneByEmail(email)
-      .then((user) => !user);
+  async signup(createUserDto: SignupDto): Promise<SafeUser> {
+    try {
+      const { email } = createUserDto;
 
-    if (!emailFree) throw new EmailAlreadyUsed();
+      const emailFree = await this._usersService
+        .findByEmail(email)
+        .then((user) => !user);
 
-    this.usersService.create(createUserDto);
+      if (!emailFree) throw new EmailAlreadyUsed();
+
+      return await (async () => {
+        const { id, email, depots } = await this._usersService.create(
+          createUserDto,
+        );
+
+        return { id, email, depots };
+      })();
+    } catch (e) {
+      throw e;
+    }
   }
 }

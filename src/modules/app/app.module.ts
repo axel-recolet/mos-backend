@@ -1,11 +1,16 @@
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { GraphQLModule } from '@nestjs/graphql';
 import { MongooseModule } from '@nestjs/mongoose';
+import { join } from 'path';
 import configuration from '../../configuration';
-import { AuthModule } from '../auth/auth.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { AuthModule } from 'auth/auth.module';
+import { StoragesModule } from '../storages/storages.module';
+import { ItemsModule } from '../items/items.module';
+import { DepotsModule } from '../depots';
+import { UsersModule } from '../users';
 
 @Module({
   imports: [
@@ -19,10 +24,17 @@ import { AppService } from './app.service';
       useFactory: async (configService: ConfigService) =>
         configService.getOrThrow('mongodb'),
     }),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      sortSchema: true,
+    }),
+    DepotsModule,
+    UsersModule,
+    StoragesModule,
+    ItemsModule,
     AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {
   static async bootstrap() {

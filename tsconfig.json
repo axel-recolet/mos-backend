@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "CommonJS",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -10,8 +10,53 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "src/*": [
+        "src/*"
+      ],
+      "abilities": [
+        "src/modules/abilities"
+      ],
+      "abilities/*": [
+        "src/modules/abilities/*"
+      ],
+      "auth/*": [
+        "src/modules/auth/*"
+      ],
+      "auth": [
+        "src/modules/auth"
+      ],
+      "storages/*": [
+        "src/modules/storages/*"
+      ],
+      "storages": [
+        "src/modules/storages"
+      ],
+      "items/*": [
+        "src/modules/items/*"
+      ],
+      "items": [
+        "src/modules/items"
+      ],
+      "depots/*": [
+        "src/modules/depots/*"
+      ],
+      "depots": [
+        "src/modules/depots"
+      ],
+      "users/*": [
+        "src/modules/users/*"
+      ],
+      "users": [
+        "src/modules/users"
+      ],
+      "utils/*": [
+        "src/utils/*"
+      ]
+    },
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "moduleResolution": "node"
   }
 }

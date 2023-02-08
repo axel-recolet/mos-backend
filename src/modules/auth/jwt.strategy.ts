@@ -1,7 +1,8 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { IDepot } from '../depots/depot.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -9,11 +10,23 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.getOrThrow('jwt').secret,
+      secretOrKey: (() => {
+        const jwt = configService.getOrThrow('jwt').secret;
+        return jwt;
+      })(),
     });
   }
 
-  async validate(payload: any) {
-    return { userId: payload.sub, username: payload.username };
+  async validate(payload: any): Promise<IJwtUser> {
+    if (!payload) throw new UnauthorizedException();
+
+    const { id, email, depots } = payload;
+    return { id, email, depots };
   }
+}
+
+export interface IJwtUser {
+  id: string;
+  email: string;
+  depots: IDepot[];
 }

@@ -1,12 +1,14 @@
+import { faker } from '@faker-js/faker';
 import { JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { Test } from '@nestjs/testing';
-import mongoose from 'mongoose';
-import { userDocumentFake } from '../users/user.fake';
-import { UsersService } from '../users/users.service';
+import { userFake } from 'users/user.fake';
+import { UsersService } from 'users/users.service';
+import { DepotsService } from 'depots/depots.service';
 import { AuthService, EmailAlreadyUsed } from './auth.service';
 
 jest.mock('../users/users.service');
+jest.mock('../depots/depots.service');
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -16,22 +18,19 @@ describe('AuthService', () => {
   const pass = 'dsljfn';
 
   beforeEach(async () => {
-    jest.clearAllMocks();
-
     const moduleRef = await Test.createTestingModule({
-      imports: [PassportModule],
-      providers: [AuthService, UsersService, JwtService],
+      providers: [AuthService, UsersService, JwtService, DepotsService],
     }).compile();
 
-    authService = moduleRef.get<AuthService>(AuthService);
+    authService = moduleRef.get(AuthService);
     usersService = moduleRef.get(UsersService);
     jwtService = moduleRef.get(JwtService);
   });
 
   describe('validateUser', () => {
     it('Wrong password', async () => {
-      jest.spyOn(usersService, 'findOneByEmail').mockResolvedValue(
-        userDocumentFake({
+      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(
+        userFake({
           email,
           password: 'aezraezraezr',
         }),
@@ -42,40 +41,90 @@ describe('AuthService', () => {
     });
 
     it("Email doesn't exist", async () => {
-      jest.spyOn(usersService, 'findOneByEmail').mockResolvedValue(null);
+      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(undefined);
       const result = authService.validateUser(email, pass);
       expect(result).resolves.toBeUndefined();
+    });
+
+    it("Doesn't return password", async () => {
+      const user = userFake({
+        email,
+        password: pass,
+      });
+      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(user);
+
+      const result = await authService.validateUser(email, pass);
+      expect(result).toMatchObject({
+        id: user.id,
+        email,
+        depots: [],
+      });
+    });
+
+    it('Handle Error', async () => {
+      jest.spyOn(usersService, 'findByEmail').mockRejectedValue(undefined);
+      const result = authService.validateUser(email, pass);
+      expect(result).rejects.toBeUndefined();
     });
   });
 
   describe('login', () => {
     it('should return jwt', async () => {
-      const user = { email, _id: new mongoose.Types.ObjectId().toString() };
+      const user = userFake({
+        email,
+      });
       const jwtSignSpy = jest
         .spyOn(jwtService, 'sign')
-        .mockImplementation(() => 'jhdsf');
+        .mockReturnValue('jhdsf');
       const result = await authService.login(user);
 
       expect(jwtSignSpy).toBeCalled();
       expect(result).toHaveProperty('access_token');
+    });
+
+    it('should throw when error', async () => {
+      const user = userFake({
+        email,
+      });
+      jest.spyOn(jwtService, 'sign').mockImplementation(() => {
+        throw new Error();
+      });
+      const result = authService.login(user);
+
+      expect(result).rejects.toThrowError();
     });
   });
 
   describe('register', () => {
     it('should throw EmailALreadyUsed When email is find', async () => {
       jest
-        .spyOn(usersService, 'findOneByEmail')
-        .mockResolvedValue(userDocumentFake({ email }));
-      const result = authService.register({ email, password: pass });
+        .spyOn(usersService, 'findByEmail')
+        .mockResolvedValue(userFake({ email }));
+      const result = authService.signup({ email, password: pass });
       expect(result).rejects.toThrow(EmailAlreadyUsed);
     });
 
     it('should create user and return void', async () => {
-      jest.spyOn(usersService, 'findOneByEmail').mockResolvedValue(undefined);
-      const createUserMethod = jest.spyOn(usersService, 'create');
       const createUserDto = { email, password: pass };
-      const result = authService.register(createUserDto);
-      await expect(result).resolves.toBeUndefined();
+      const createdUser = {
+        id: faker.database.mongodbObjectId(),
+        ...createUserDto,
+        depots: [],
+        creditCard: undefined,
+      };
+
+      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(undefined);
+
+      const createUserMethod = jest
+        .spyOn(usersService, 'create')
+        .mockResolvedValue(createdUser);
+
+      const result = await authService.signup(createUserDto);
+      const resExpected = (() => {
+        const { id, email, depots } = createdUser;
+        return { id, email, depots };
+      })();
+      expect(result).toEqual(resExpected);
       expect(createUserMethod).toBeCalled();
       expect(createUserMethod).toHaveBeenCalledWith(createUserDto);
     });
