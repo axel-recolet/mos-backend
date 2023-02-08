@@ -4,5 +4,4 @@ export default {
   ...defaultJestConfig,
   rootDir: '..',
   testRegex: '.e2e-spec.ts$',
-  testEnvironment: 'node',
 };

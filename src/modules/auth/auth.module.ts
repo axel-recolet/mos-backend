@@ -8,16 +8,13 @@ import { DepotsService } from 'depots/depots.service';
 import { AuthResolver } from './auth.resolver';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
-import { LocalStrategy } from './local.strategy';
 import { UsersService } from '../users';
-import { PermissionsModule } from '../permissions/premissions.module';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
     DepotsModule,
-    PermissionsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,7 +27,6 @@ import { PermissionsModule } from '../permissions/premissions.module';
   providers: [
     AuthResolver,
     AuthService,
-    LocalStrategy,
     JwtStrategy,
     DepotsService,
     UsersService,

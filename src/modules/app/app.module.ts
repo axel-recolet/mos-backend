@@ -11,7 +11,6 @@ import { StoragesModule } from '../storages/storages.module';
 import { ItemsModule } from '../items/items.module';
 import { DepotsModule } from '../depots';
 import { UsersModule } from '../users';
-import { PermissionsModule } from '../permissions/premissions.module';
 
 @Module({
   imports: [
@@ -31,11 +30,10 @@ import { PermissionsModule } from '../permissions/premissions.module';
       sortSchema: true,
     }),
     DepotsModule,
-    PermissionsModule,
-    AuthModule,
     UsersModule,
     StoragesModule,
     ItemsModule,
+    AuthModule,
   ],
 })
 export class AppModule {

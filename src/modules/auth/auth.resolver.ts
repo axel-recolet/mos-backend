@@ -36,6 +36,8 @@ export class AuthResolver {
       })();
 
       return this._authService.login(user);
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   }
 }

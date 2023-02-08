@@ -12,7 +12,7 @@ import { User } from 'utils/user.decorator';
 import { IJwtUser } from '../auth/jwt.strategy';
 import { ItemsService } from '../items/items.service';
 import { Item } from '../items/model/item.model';
-import { CreateStorageDto } from './dto/storage.dto';
+import { CreateStorageDto } from './dto/create.storage.dto';
 import { IStorage } from './storage.interface';
 import { Storage } from './storage.model';
 import { StoragesService } from './storages.service';

@@ -15,6 +15,6 @@ export class CreateStorageDto {
   @Field(() => ID, { nullable: true })
   containedIn?: string;
 
-  @Field(() => String)
-  depotId: string;
+  @Field(() => ID)
+  depot: string;
 }

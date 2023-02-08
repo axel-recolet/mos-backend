@@ -2,10 +2,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type CreditCard {
-  id: String!
-}
-
 type Depot {
   admins: [User!]!
   creator: User!
@@ -31,7 +27,7 @@ type LoginResponse {
 }
 
 type Mutation {
-  createStorage(comment: String, containedIn: ID, depotId: String!, fillRate: Float = 0, name: String!): Storage
+  createStorage(comment: String, containedIn: ID, depot: ID!, fillRate: Float = 0, name: String!): Storage
   login(password: String!, username: String!): LoginResponse!
   signup(email: String!, password: String!): User
 }
@@ -58,7 +54,6 @@ type Unit {
 }
 
 type User {
-  creditCard: CreditCard!
   depots: [Depot!]!
   email: String!
   id: ID!

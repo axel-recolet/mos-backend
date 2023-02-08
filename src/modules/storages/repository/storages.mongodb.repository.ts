@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IStoragesRepository } from './repository.interface';
 import { StorageDocument, StorageEntity } from './storage.entity';
-import { CreateStorageDto } from '../dto/storage.dto';
+import { CreateStorageDto } from '../dto/create.storage.dto';
 import { IStorage } from '../storage.interface';
+import { UpdateStorageDto } from '../dto';
 
 @Injectable()
 export class StoragesRepository implements IStoragesRepository {
@@ -13,6 +14,18 @@ export class StoragesRepository implements IStoragesRepository {
     private readonly _storagesRepo: Model<StorageDocument>,
   ) {}
 
+  // Create
+  async create(storage: CreateStorageDto): Promise<IStorage> {
+    try {
+      const model = new this._storagesRepo(storage);
+      model.save();
+      return model.toObject({ versionKey: false });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Read
   async findById(id: string): Promise<IStorage | undefined> {
     try {
       const model = await this._storagesRepo.findById(id);
@@ -31,13 +44,21 @@ export class StoragesRepository implements IStoragesRepository {
     }
   }
 
-  async create(storage: CreateStorageDto): Promise<IStorage> {
+  // Update
+  async update(storage: UpdateStorageDto): Promise<void> {
     try {
-      const model = new this._storagesRepo(storage);
-      model.save();
-      return model.toObject({ versionKey: false });
+      const { id: _id } = storage;
+      if (await this._storagesRepo.exists({ _id, depot: storage.depot })) {
+        throw new NotFoundException();
+      }
+
+      await this._storagesRepo.findByIdAndUpdate(storage.id, storage, {
+        runValidators: true,
+      });
     } catch (error) {
       throw error;
     }
   }
+
+  // Delete
 }

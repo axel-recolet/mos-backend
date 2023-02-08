@@ -15,7 +15,6 @@ import { DepotsPermission } from './depots.permission';
 
 jest.mock('./repository');
 jest.mock('users/users.service');
-jest.mock('../permissions/permissions.service');
 
 describe('DepotsService', () => {
   let depotsService: DepotsService;
