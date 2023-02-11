@@ -19,7 +19,7 @@ export class AuthResolver {
       if (e instanceof EmailAlreadyUsed) {
         throw new BadRequestException(e.message);
       }
-      throw e.message;
+      throw e;
     }
   }
 

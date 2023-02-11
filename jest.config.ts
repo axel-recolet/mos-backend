@@ -5,7 +5,7 @@ const { compilerOptions } = JSON.parse(readFileSync('tsconfig.json', 'utf-8'));
 export default {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
-  testRegex: '.*\\.spec\\.ts$',
+  testRegex: '.*\\.(e2e-)?spec\\.ts$',
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },

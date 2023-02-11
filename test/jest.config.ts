@@ -4,4 +4,5 @@ export default {
   ...defaultJestConfig,
   rootDir: '..',
   testRegex: '.e2e-spec.ts$',
+  setupFiles: ['./test/env.ts'],
 };

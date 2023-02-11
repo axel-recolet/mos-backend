@@ -400,5 +400,6 @@ docker-compose.yaml
 .env
 dist
 
-# MongoDB test db
-test/data
+# GraphQl
+src/schema.gql
+
