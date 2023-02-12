@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { SignupDto } from '../auth/dto';
-import { userFake } from './user.fake';
+import { fakeUser } from './user.fake';
 import { UsersRepository } from './users.repository';
 import { UsersService } from './users.service';
 
@@ -27,7 +27,7 @@ describe('UsersService', () => {
       };
       const saveSpy = jest
         .spyOn(usersRepo, 'create')
-        .mockResolvedValue(userFake(createdUserDto));
+        .mockResolvedValue(fakeUser(createdUserDto));
 
       const result = await usersService.create(createdUserDto);
       expect(saveSpy).toBeCalled();

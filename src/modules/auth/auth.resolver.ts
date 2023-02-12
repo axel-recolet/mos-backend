@@ -1,6 +1,11 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
-import { IUser, User } from '../users';
+import { IUser, User } from 'users';
 import { AuthService, EmailAlreadyUsed } from './auth.service';
 import { SignupDto, LoginResponse, LoginDto } from './dto';
 
@@ -10,21 +15,21 @@ export class AuthResolver {
 
   @Mutation((returns) => User, { nullable: true })
   async signup(
-    @Args() createUserDto: SignupDto,
+    @Args(new ValidationPipe()) createUserDto: SignupDto,
   ): Promise<Omit<IUser, 'password' | 'creditCard'>> {
     try {
       const result = await this._authService.signup(createUserDto);
       return result;
     } catch (e) {
       if (e instanceof EmailAlreadyUsed) {
-        throw new BadRequestException(e.message);
+        throw new ForbiddenException(e.message);
       }
       throw e;
     }
   }
 
   @Mutation((returns) => LoginResponse)
-  async login(@Args() login: LoginDto) {
+  async login(@Args(new ValidationPipe()) login: LoginDto) {
     try {
       const user = await (async () => {
         const result = await this._authService.validateUser(

@@ -3,12 +3,12 @@
 # ------------------------------------------------------
 
 type Depot {
-  admins: [User!]!
-  creator: User!
+  admins: [String!]!
+  creator: String!
   dueDate: String!
   id: ID!
   name: String!
-  users: [User!]!
+  users: [String!]!
 }
 
 type Item {
@@ -27,6 +27,7 @@ type LoginResponse {
 }
 
 type Mutation {
+  createDepot(admins: [String!]! = [], name: String!, users: [String!]! = []): Depot!
   createStorage(comment: String, containedIn: ID, depot: ID!, fillRate: Float = 0, name: String!): Storage
   login(password: String!, username: String!): LoginResponse!
   signup(email: String!, password: String!): User

@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { IJwtUser } from '../auth/jwt.strategy';
+import { IUser } from '../users';
 import { CreateStorageDto, UpdateStorageDto } from './dto';
 import { StoragesRepository } from './repository/storages.mongodb.repository';
 import { IStorage } from './storage.interface';
@@ -13,9 +13,8 @@ export class StoragesService {
   ) {}
 
   // Create
-  async create(storage: CreateStorageDto, user: IJwtUser): Promise<IStorage> {
+  async create(storage: CreateStorageDto, user: IUser): Promise<IStorage> {
     try {
-      //const ability = this._permisService.from(user);
       const storageDoc = await this._storagesRepo.create(storage);
       return storageDoc;
     } catch (error) {
@@ -41,7 +40,7 @@ export class StoragesService {
   }
 
   // Update
-  async update(updateStorage: UpdateStorageDto, user: IJwtUser) {
+  async update(updateStorage: UpdateStorageDto, user: IUser) {
     try {
       // Permission
       const isAllow = await this._permission.updateStorage(user, updateStorage);

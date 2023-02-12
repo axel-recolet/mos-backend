@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { Test } from '@nestjs/testing';
-import { userFake } from 'users/user.fake';
+import { fakeUser } from 'users/user.fake';
 import { UsersService } from 'users/users.service';
 import { DepotsService } from 'depots/depots.service';
 import { AuthService, EmailAlreadyUsed } from './auth.service';
@@ -30,7 +30,7 @@ describe('AuthService', () => {
   describe('validateUser', () => {
     it('Wrong password', async () => {
       jest.spyOn(usersService, 'findByEmail').mockResolvedValue(
-        userFake({
+        fakeUser({
           email,
           password: 'aezraezraezr',
         }),
@@ -47,7 +47,7 @@ describe('AuthService', () => {
     });
 
     it("Doesn't return password", async () => {
-      const user = userFake({
+      const user = fakeUser({
         email,
         password: pass,
       });
@@ -70,7 +70,7 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return jwt', async () => {
-      const user = userFake({
+      const user = fakeUser({
         email,
       });
       const jwtSignSpy = jest
@@ -83,7 +83,7 @@ describe('AuthService', () => {
     });
 
     it('should throw when error', async () => {
-      const user = userFake({
+      const user = fakeUser({
         email,
       });
       jest.spyOn(jwtService, 'sign').mockImplementation(() => {
@@ -99,7 +99,7 @@ describe('AuthService', () => {
     it('should throw EmailALreadyUsed When email is find', async () => {
       jest
         .spyOn(usersService, 'findByEmail')
-        .mockResolvedValue(userFake({ email }));
+        .mockResolvedValue(fakeUser({ email }));
       const result = authService.signup({ email, password: pass });
       expect(result).rejects.toThrow(EmailAlreadyUsed);
     });

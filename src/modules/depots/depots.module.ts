@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from 'users/users.module';
 import { UsersService } from '../users/users.service';
 import { DepotsPermission } from './depots.permission';
+import { DepotsResolver } from './depots.resolver';
 import { DepotsService } from './depots.service';
 import { DepotEntity, depotSchema, DepotsRepository } from './repository';
 
@@ -13,7 +14,13 @@ import { DepotEntity, depotSchema, DepotsRepository } from './repository';
     ]),
     UsersModule,
   ],
-  providers: [DepotsRepository, DepotsPermission, DepotsService, UsersService],
+  providers: [
+    DepotsRepository,
+    DepotsPermission,
+    DepotsService,
+    DepotsResolver,
+    UsersService,
+  ],
   exports: [DepotsService, DepotsRepository, DepotsPermission],
 })
 export class DepotsModule {}

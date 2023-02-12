@@ -1,17 +1,18 @@
 import { faker } from '@faker-js/faker';
 import { Test } from '@nestjs/testing';
-import { userFake } from 'users/user.fake';
+import * as classTransformer from 'class-transformer';
+import { fakeUser } from 'users/user.fake';
 import { IDepot } from './depot.interface';
 import { DepotsService } from './depots.service';
 import { DepotsRepository } from './repository';
 import { CreateDepotDto } from './dto';
 import { plainToInstance } from 'class-transformer';
-import { UserEntity } from 'users/user.entity';
 import { UsersService } from 'users/users.service';
 import { IUser } from '../users';
 import * as moment from 'moment';
-import { IJwtUser } from '../auth';
 import { DepotsPermission } from './depots.permission';
+import { ValidationError } from 'class-validator';
+import { ForbiddenException } from '@nestjs/common';
 
 jest.mock('./repository');
 jest.mock('users/users.service');
@@ -41,129 +42,69 @@ describe('DepotsService', () => {
   });
 
   describe('create', () => {
-    let creator: IUser;
-    let user: IJwtUser;
+    let user: IUser;
     let createDepotDto: CreateDepotDto;
-    let depotEntity: IDepot;
 
     beforeEach(async () => {
-      jest.clearAllMocks();
-
-      creator = userFake({ id: faker.datatype.uuid() });
-
-      user = {
-        id: creator.id,
-        email: creator.email,
-        depots: creator.depots,
-      };
+      user = fakeUser({ id: faker.datatype.uuid() });
 
       createDepotDto = plainToInstance(CreateDepotDto, {
         name: faker.company.name(),
         admins: [faker.internet.email()],
         users: [faker.internet.email()],
       });
+    });
 
-      depotEntity = {
+    // Instantiation
+    it('should transform plain to instance of CreateDepotDto', async () => {
+      const plainToInstanceSpy = jest.spyOn(
+        classTransformer,
+        'plainToInstance',
+      );
+
+      await depotsService.create({ ...createDepotDto }, user);
+
+      expect(plainToInstanceSpy).toBeCalled();
+    });
+
+    // Validation
+    it('should throw an error when argments is not validate', async () => {
+      createDepotDto.admins.push(faker.name.firstName());
+
+      const result = depotsService.create(createDepotDto, user);
+
+      expect(result).rejects.toBeInstanceOf(Array<ValidationError>);
+    });
+
+    // Permission
+    it('should throw an ForbiddenException when user is not allow to create depot', async () => {
+      const permisSpy = jest
+        .spyOn(permisService, 'createDepot')
+        .mockResolvedValue(false);
+
+      const result = depotsService.create(createDepotDto, user);
+
+      await expect(result).rejects.toBeInstanceOf(ForbiddenException);
+      expect(permisSpy).toHaveBeenCalled();
+    });
+
+    // All work
+    it('should create depot', async () => {
+      const depotEntity: IDepot = {
         id: faker.datatype.uuid(),
         ...createDepotDto,
-        creator,
-        admins: (() => {
-          const result: UserEntity[] = [];
-          for (const email of createDepotDto.admins) {
-            result.push(userFake({ email }));
-          }
-          if (creator) result.push(creator);
-          return result;
-        })(),
-        users: (() => {
-          const result: UserEntity[] = [];
-          for (const email of createDepotDto.users) {
-            result.push(userFake({ email }));
-          }
-          return result;
-        })(),
+        creator: user.id,
         dueDate: moment().add(1, 'months'),
       };
-    });
 
-    it('should create depot', async () => {
-      const usersServiceFindByIdSpy = jest
-        .spyOn(usersService, 'findById')
-        .mockResolvedValue(creator);
+      jest.spyOn(permisService, 'createDepot').mockResolvedValue(true);
+      jest.spyOn(depotsRepo, 'create').mockResolvedValue(depotEntity);
 
-      const usersServiceFindByEmailSpy = jest
-        .spyOn(usersService, 'findByEmail')
-        .mockResolvedValueOnce(depotEntity.admins[0])
-        .mockResolvedValueOnce(depotEntity.users[0]);
+      const result = await depotsService.create(createDepotDto, user);
 
-      const repoCreateSpy = jest
-        .spyOn(depotsRepo, 'create')
-        .mockResolvedValue(depotEntity);
-
-      const permisServiceSpy = jest
-        .spyOn(permisService, 'createDepot')
-        .mockResolvedValue(true);
-
-      const result = await depotsService.create(
-        {
-          creator: creator.id,
-          ...createDepotDto,
-        },
-        user,
-      );
-
-      expect(usersServiceFindByIdSpy).toHaveBeenCalledWith(creator.id);
-      expect(usersServiceFindByEmailSpy).toHaveBeenCalledTimes(2);
       expect(result).toEqual(depotEntity);
     });
-
-    it("should throw Error when creator doesn't exist", async () => {
-      const usersServiceFindByIdSpy = jest
-        .spyOn(usersService, 'findById')
-        .mockResolvedValue(undefined);
-
-      const result = depotsService.create(
-        {
-          creator: creator.id,
-          ...createDepotDto,
-        },
-        user,
-      );
-
-      expect(result).rejects.toThrow();
-    });
-
-    it('should not add admin when his Email not exists', async () => {
-      const usersServiceFindByIdSpy = jest
-        .spyOn(usersService, 'findById')
-        .mockResolvedValue(creator);
-
-      const usersServiceFindByEmailSpy = jest
-        .spyOn(usersService, 'findByEmail')
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(depotEntity.users[0]);
-
-      const repoCreateSpy = jest
-        .spyOn(depotsRepo, 'create')
-        .mockResolvedValue({ ...depotEntity, admins: [] });
-
-      const UserPermisServiceSpy = jest
-        .spyOn(permisService, 'createDepot')
-        .mockResolvedValue(true);
-
-      const depot: CreateDepotDto & { creator: string } = {
-        creator: creator.id,
-        ...createDepotDto,
-      };
-
-      const result = await depotsService.create(depot, user);
-
-      expect(repoCreateSpy).toHaveBeenCalledWith({
-        ...depot,
-        admins: [creator.id],
-        users: depotEntity.users.map((user) => user.id),
-        dueDate: moment().toISOString(),
-      });
-    });
   });
+
+  describe('Name of the group', () => {});
 });

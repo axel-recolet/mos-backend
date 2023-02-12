@@ -5,7 +5,7 @@ import { INestApplication } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Model } from 'mongoose';
-import { UserDocument, UserEntity, userFake } from 'src/modules/users';
+import { fakeUser, UserDocument, UserEntity } from 'users';
 import { getModelToken } from '@nestjs/mongoose';
 
 // env
@@ -17,11 +17,9 @@ describe('Auth (e2e)', () => {
   let mongod: MongoMemoryServer;
   let userModel: Model<UserDocument>;
 
-  const user = {
+  const userDto = {
     email: faker.internet.email(),
     password: faker.internet.password(),
-    jwt: undefined,
-    authorization: (jwt: string) => `Beaer ${jwt}`,
   };
 
   beforeEach(async () => {
@@ -51,8 +49,8 @@ describe('Auth (e2e)', () => {
         .send({
           query: `mutation {
             signup(
-              email: "${user.email}",
-              password: "${user.password}",
+              email: "${userDto.email}",
+              password: "${userDto.password}",
             ) {
               email
             }
@@ -68,8 +66,8 @@ describe('Auth (e2e)', () => {
         .send({
           query: `mutation {
             signup(
-              email: "${user.email}",
-              password: "${user.password}",
+              email: "${userDto.email}",
+              password: "${userDto.password}",
             ) {
               password
             }
@@ -83,15 +81,16 @@ describe('Auth (e2e)', () => {
     });
 
     it('should throw when Email is not free', async () => {
-      const others: UserEntity[] = [userFake()];
-      await userModel.insertMany(others);
+      const user = await userModel.create(userDto);
 
-      const { body } = await request(app.getHttpServer())
+      const {
+        body: { errors },
+      } = await request(app.getHttpServer())
         .post('/graphql')
         .send({
           query: `mutation {
           signup(
-            email: "${others[0].email}",
+            email: "${user.email}",
             password: "${faker.internet.password()}",
           ) {
             email
@@ -99,17 +98,32 @@ describe('Auth (e2e)', () => {
         }`,
         });
 
-      expect(body).toHaveProperty('errors[0].message');
-      expect(body.data.signup).toBeNull();
+      expect(errors[0].extensions.response.statusCode).toBe(403);
+    });
+
+    it('should throw when Email is not an Email', async () => {
+      const {
+        body: { errors },
+      } = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `mutation {
+          signup(
+            email: "${faker.name.firstName()}",
+            password: "${userDto.password}",
+          ) {
+            email
+          }
+        }`,
+        });
+
+      expect(errors[0].extensions.response.statusCode).toBe(400);
     });
   });
 
   describe('login', () => {
     beforeEach(async () => {
-      const { email, password } = user;
-      await userModel.create(
-        userFake({ email, password, creditCard: undefined }),
-      );
+      await userModel.create(fakeUser({ ...userDto, creditCard: undefined }));
     });
 
     it('should return access_token', async () => {
@@ -118,8 +132,8 @@ describe('Auth (e2e)', () => {
         .send({
           query: `mutation {
               login(
-                username: "${user.email}",
-                password: "${user.password}"
+                username: "${userDto.email}",
+                password: "${userDto.password}"
               ) {
                 access_token
               }
@@ -135,7 +149,7 @@ describe('Auth (e2e)', () => {
         .send({
           query: `mutation {
               login(
-                username: "${user.email}",
+                username: "${userDto.email}",
                 password: "${faker.internet.password()}"
               ) {
                 access_token
@@ -153,7 +167,7 @@ describe('Auth (e2e)', () => {
           query: `mutation {
               login(
                 username: "${faker.internet.email()}",
-                password: "${user.password}"
+                password: "${userDto.password}"
               ) {
                 access_token
               }

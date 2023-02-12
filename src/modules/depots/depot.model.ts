@@ -2,6 +2,7 @@ import { Field, ID, ObjectType } from '@nestjs/graphql';
 import { Transform } from 'class-transformer';
 import moment from 'moment';
 import { Moment } from 'moment';
+import { Email } from 'utils/email.type';
 import { IUser } from 'users/user.interface';
 import { User } from 'users/user.model';
 import { IDepot } from './depot.interface';
@@ -14,14 +15,14 @@ export class Depot implements IDepot {
   @Field(() => String)
   name: string;
 
-  @Field(() => User)
-  creator: IUser;
+  @Field(() => String)
+  creator: string;
 
-  @Field(() => [User])
-  admins: IUser[];
+  @Field(() => [String])
+  admins: Email[];
 
-  @Field(() => [User])
-  users: IUser[];
+  @Field(() => [String])
+  users: Email[];
 
   @Field(() => String)
   @Transform(({ value }) => value, { toClassOnly: true })

@@ -1,52 +1,52 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import moment, { Moment } from 'moment';
-import { Types, HydratedDocument } from 'mongoose';
-import { UserEntity } from 'src/modules/users';
-import { IUser } from 'src/modules/users/user.interface';
+import * as moment from 'moment';
+import { HydratedDocument } from 'mongoose';
+import { Email } from 'src/utils/email.type';
 import { IDepot } from '../depot.interface';
 
 export type DepotDocument = HydratedDocument<DepotEntity>;
 
 @Schema({
+  id: true,
   toObject: {
     versionKey: false,
     transform(doc, ret, options) {
-      const { _id: id, ...rest } = doc;
+      const { _id: id, ...rest } = ret;
       return {
         id,
-        rest,
+        ...rest,
       };
     },
   },
 })
 export class DepotEntity implements IDepot {
-  @Prop({ _id: true })
+  @Prop({ type: String })
   id!: string;
 
   @Prop({ type: String, required: true })
   name: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', unique: true })
-  creator: IUser;
+  @Prop({ type: String, ref: 'User', unique: true })
+  creator: string;
 
   @Prop({
-    type: [{ type: Types.ObjectId, ref: 'User' }],
+    type: [{ type: String, ref: 'User' }],
     required: true,
   })
-  admins: IUser[];
+  admins: Email[];
 
   @Prop({
-    type: [{ type: Types.ObjectId, ref: 'User' }],
+    type: [{ type: String, ref: 'User' }],
     required: true,
   })
-  users: IUser[];
+  users: Email[];
 
   @Prop({
     type: String,
     required: true,
     transform: (value) => moment(value),
   })
-  dueDate: Moment;
+  dueDate: moment.Moment;
 }
 
 export const depotSchema = SchemaFactory.createForClass(DepotEntity);

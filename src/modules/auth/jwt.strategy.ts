@@ -3,10 +3,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IDepot } from '../depots/depot.interface';
+import { IUser, UsersService } from 'users';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly _usersService: UsersService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -17,15 +21,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any): Promise<IJwtUser> {
-    if (!payload) throw new UnauthorizedException();
+  async validate(payload: JwtPayload): Promise<Omit<IUser, 'password'>> {
+    if (!payload.id) throw new UnauthorizedException();
 
-    const { id, email, depots } = payload;
-    return { id, email, depots };
+    const user = await this._usersService.findById(payload.id);
+    if (!user) throw new UnauthorizedException();
+
+    const { id, email, depots, creditCard } = user;
+    return { id, email, depots, creditCard };
   }
 }
 
-export interface IJwtUser {
+export interface JwtPayload {
   id: string;
   email: string;
   depots: IDepot[];

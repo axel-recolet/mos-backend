@@ -1,16 +1,12 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ForbiddenException,
-} from '@nestjs/common';
-import { isEmail } from 'class-validator';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import * as moment from 'moment';
 import { UsersService, IUser } from 'users';
-import { IJwtUser } from '../auth';
 import { DepotsPermission } from './depots.permission';
 import { IDepot } from './depot.interface';
 import { CreateDepotDto } from './dto';
 import { DepotsRepository } from './repository';
+import { validateOrReject } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class DepotsService {
@@ -20,72 +16,30 @@ export class DepotsService {
     private readonly _permission: DepotsPermission,
   ) {}
 
-  async create(
-    createDepotDto: CreateDepotDto & { creator: string },
-    jwtUser: IJwtUser,
-  ): Promise<IDepot> {
+  async create(createDepotDto: CreateDepotDto, user: IUser): Promise<IDepot> {
     try {
-      // Permission
-      await (async () => {
-        const user = await this._usersService.findById(jwtUser.id);
-        if (!user) throw new UnauthorizedException();
-        const isAllow = await this._permission.createDepot(user);
-        if (!isAllow) throw new ForbiddenException();
-      })();
-
-      const toId = async (idOrEmail: string): Promise<string | undefined> => {
-        if (isEmail(idOrEmail)) {
-          const user = await this._usersService.findByEmail(idOrEmail);
-          return user?.id;
-        } else {
-          const user = await this._usersService.findById(idOrEmail);
-          return user?.id;
-        }
-      };
-
-      const { creator, admins, users, ...rest } = createDepotDto;
-
-      const creatorId = await toId(creator);
-
-      if (!creatorId) {
-        throw Error(`${creator} doesn't exist.`);
+      // Instantiation
+      if (!(createDepotDto instanceof CreateDepotDto)) {
+        createDepotDto = plainToInstance(
+          CreateDepotDto,
+          createDepotDto as CreateDepotDto,
+        );
       }
 
-      const [adminIds, userIds] = await (async () => {
-        const ids: Promise<string | undefined>[][] = [[], []];
+      // Validation
+      await validateOrReject(createDepotDto);
 
-        for (const admin of admins) {
-          ids[0].push(toId(admin));
-        }
-
-        for (const user of users) {
-          ids['1'].push(toId(user));
-        }
-
-        const toSetNotNull = (ids: (string | undefined)[]): Set<string> => {
-          const setIds = new Set(ids);
-          setIds.delete(undefined);
-          return setIds as Set<string>;
-        };
-
-        return Promise.all([
-          Promise.all(ids[0]).then(toSetNotNull),
-          Promise.all(ids[1]).then(toSetNotNull),
-        ]);
-      })();
-
-      adminIds.add(creator);
+      // Permission
+      const isAllow = await this._permission.createDepot(user);
+      if (!isAllow) throw new ForbiddenException();
 
       const newDepot = {
-        creator: creatorId,
-        admins: Array.from(adminIds),
-        users: Array.from(userIds),
-        dueDate: moment().toISOString(),
-        ...rest,
+        creator: user.id,
+        ...createDepotDto,
+        dueDate: moment().add(1, 'months').toISOString(),
       };
 
       const result = await this._depotsRepo.create(newDepot);
-
       return result;
     } catch (e) {
       throw e;
@@ -93,7 +47,7 @@ export class DepotsService {
   }
 
   // Read
-  async findById(depotId: string, user: IJwtUser): Promise<IDepot | undefined> {
+  async findById(depotId: string, user: IUser): Promise<IDepot | undefined> {
     try {
       // permission
       await (async () => {
@@ -112,7 +66,7 @@ export class DepotsService {
   async addAdmins(
     depotId: string,
     adminIds: string[],
-    user: IJwtUser,
+    user: IUser,
   ): Promise<void> {
     try {
       // Permission
@@ -133,7 +87,7 @@ export class DepotsService {
   async addUsers(
     depotId: string,
     userIds: string[],
-    user: IJwtUser,
+    user: IUser,
   ): Promise<void> {
     // Permission
     await (async () => {

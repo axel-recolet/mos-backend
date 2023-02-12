@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { IJwtUser } from 'auth';
 import { IUser } from 'users';
 import { IDepot } from './depot.interface';
 
@@ -7,29 +6,45 @@ import { IDepot } from './depot.interface';
 export class DepotsPermission {
   // Create
   async createDepot(user: IUser): Promise<boolean> {
-    if (!user?.creditCard) throw new Error("User doesn't have credit card.");
-    return true;
+    try {
+      if (!user?.creditCard) throw new Error("User doesn't have credit card.");
+      return true;
+    } catch (error) {
+      throw error;
+    }
   }
 
   // Read
-  async getDepot(jwtUser: IJwtUser, depotId: string): Promise<boolean> {
-    for (const userDepot of jwtUser.depots) {
-      if (userDepot.id === depotId) {
-        return true;
+  async getDepot(user: IUser, depotId: string): Promise<boolean> {
+    try {
+      for (const userDepot of user.depots) {
+        if (userDepot.id === depotId) {
+          return true;
+        }
       }
+      return false;
+    } catch (error) {
+      throw error;
     }
-    return false;
   }
 
   // Update
-  async updateDepotAdmins(jwtUser: IJwtUser, depot: IDepot): Promise<boolean> {
-    for (const admin of depot.admins) {
-      if (admin.id === jwtUser.id) return true;
+  async updateDepotAdmins(user: IUser, depot: IDepot): Promise<boolean> {
+    try {
+      for (const admin of depot.admins) {
+        if (admin === user.email) return true;
+      }
+      return false;
+    } catch (error) {
+      throw error;
     }
-    return false;
   }
 
-  async updateDepotUsers(jwtUser: IJwtUser, depot: IDepot): Promise<boolean> {
-    return this.updateDepotAdmins(jwtUser, depot);
+  async updateDepotUsers(user: IUser, depot: IDepot): Promise<boolean> {
+    try {
+      return this.updateDepotAdmins(user, depot);
+    } catch (error) {
+      throw error;
+    }
   }
 }

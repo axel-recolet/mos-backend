@@ -9,9 +9,9 @@ import {
 } from '@nestjs/graphql';
 import { GqlAuthGuard } from 'auth/gql-jwt-auth.guard';
 import { User } from 'utils/user.decorator';
-import { IJwtUser } from '../auth/jwt.strategy';
 import { ItemsService } from '../items/items.service';
 import { Item } from '../items/model/item.model';
+import { IUser } from '../users';
 import { CreateStorageDto } from './dto/create.storage.dto';
 import { IStorage } from './storage.interface';
 import { Storage } from './storage.model';
@@ -35,10 +35,7 @@ export class StoragesResolver {
 
   @Mutation((returns) => Storage, { nullable: true })
   @UseGuards(GqlAuthGuard)
-  async createStorage(
-    @User() user: IJwtUser,
-    @Args() storage: CreateStorageDto,
-  ) {
+  async createStorage(@User() user: IUser, @Args() storage: CreateStorageDto) {
     try {
       return this._storagesService.create(storage, user);
     } catch (e) {

@@ -1,12 +1,14 @@
 import { ArgsType, Field, InputType } from '@nestjs/graphql';
-import { Transform } from 'class-transformer';
 import { IsEmail } from 'class-validator';
 import { Email } from 'utils/email.type';
 
 @ArgsType()
 @InputType()
 export class CreateDepotDto {
-  @Field(() => [String])
+  @Field(() => String)
+  name: string;
+
+  @Field(() => [String], { defaultValue: [] })
   @IsEmail(
     {},
     {
@@ -23,7 +25,4 @@ export class CreateDepotDto {
     },
   )
   users: Email[];
-
-  @Field(() => String)
-  name: string;
 }

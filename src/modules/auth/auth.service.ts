@@ -64,13 +64,10 @@ export class AuthService {
 
       if (!emailFree) throw new EmailAlreadyUsed();
 
-      return await (async () => {
-        const { id, email, depots } = await this._usersService.create(
-          createUserDto,
-        );
-
+      return await this._usersService.create(createUserDto).then((value) => {
+        const { id, email, depots } = value;
         return { id, email, depots };
-      })();
+      });
     } catch (e) {
       throw e;
     }

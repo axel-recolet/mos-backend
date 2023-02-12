@@ -1,10 +1,10 @@
-import { IJwtUser } from 'auth/jwt.strategy';
+import { IUser } from '../users';
 import { CreateStorageDto, UpdateStorageDto } from './dto';
 
 export class StoragesPermission {
   // Create
   async createStorage(
-    user: IJwtUser,
+    user: IUser,
     createStorage: CreateStorageDto,
   ): Promise<boolean> {
     try {
@@ -19,7 +19,7 @@ export class StoragesPermission {
   }
 
   async updateStorage(
-    user: IJwtUser,
+    user: IUser,
     updateStorage: UpdateStorageDto,
   ): Promise<boolean> {
     try {
