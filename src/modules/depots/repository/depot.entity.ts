@@ -4,29 +4,29 @@ import { HydratedDocument } from 'mongoose';
 import { Email } from 'src/utils/email.type';
 import { IDepot } from '../depot.interface';
 
-export type DepotDocument = HydratedDocument<DepotEntity>;
+export type DepotDocument = HydratedDocument<Depot>;
 
 @Schema({
   id: true,
   toObject: {
     versionKey: false,
     transform(doc, ret, options) {
-      const { _id: id, ...rest } = ret;
+      const { _id, ...rest } = ret;
       return {
-        id,
+        id: _id.toString(),
         ...rest,
       };
     },
   },
+  validateBeforeSave: true,
 })
-export class DepotEntity implements IDepot {
-  @Prop({ type: String })
+class Depot implements IDepot {
   id!: string;
 
   @Prop({ type: String, required: true })
   name: string;
 
-  @Prop({ type: String, ref: 'User', unique: true })
+  @Prop({ type: String, ref: 'User' })
   creator: string;
 
   @Prop({
@@ -42,11 +42,16 @@ export class DepotEntity implements IDepot {
   users: Email[];
 
   @Prop({
-    type: String,
+    type: Date,
     required: true,
     transform: (value) => moment(value),
+    toString() {
+      return this.dueDate.format();
+    },
   })
   dueDate: moment.Moment;
 }
 
-export const depotSchema = SchemaFactory.createForClass(DepotEntity);
+export { Depot as DepotEntity };
+
+export const depotSchema = SchemaFactory.createForClass(Depot);

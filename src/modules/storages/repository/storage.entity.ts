@@ -33,7 +33,7 @@ export class StorageEntity implements IStorage {
   })
   containedIns?: Storage[];
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'DepotEntity' })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Depot' })
   depot: IDepot;
 }
 

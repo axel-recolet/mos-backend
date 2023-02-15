@@ -1,5 +1,5 @@
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { Module, ValidationPipe } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -8,9 +8,9 @@ import { join } from 'path';
 import configuration from '../../configuration';
 import { AuthModule } from 'auth/auth.module';
 import { StoragesModule } from '../storages/storages.module';
-import { ItemsModule } from '../items/items.module';
-import { DepotsModule } from '../depots';
-import { UsersModule } from '../users';
+import { ItemsModule } from 'items/items.module';
+import { DepotsModule } from 'depots/depots.module';
+import { UsersModule } from 'users/users.module';
 
 @Module({
   imports: [

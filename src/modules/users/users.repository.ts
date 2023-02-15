@@ -70,7 +70,7 @@ export class UsersRepository {
 
   async findById(id: string): Promise<IUser | undefined> {
     try {
-      const user = await this._usersRepo.findById(id);
+      const user = await this._usersRepo.findById(id).populate('depots');
       return user?.toObject();
     } catch (error) {
       throw error;

@@ -1,13 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { IUser } from 'users';
 import { IDepot } from './depot.interface';
 
 @Injectable()
 export class DepotsPermission {
+  private _isCreator(user: IUser, depot: IDepot): boolean {
+    try {
+      return depot.creator === user.email;
+    } catch (error) {
+      throw error;
+    }
+  }
   // Create
   async createDepot(user: IUser): Promise<boolean> {
     try {
-      if (!user?.creditCard) throw new Error("User doesn't have credit card.");
+      if (!user?.creditCard)
+        throw new ForbiddenException("User doesn't have credit card.");
       return true;
     } catch (error) {
       throw error;
@@ -15,34 +23,71 @@ export class DepotsPermission {
   }
 
   // Read
-  async getDepot(user: IUser, depotId: string): Promise<boolean> {
+  async getDepot(user: IUser, depot: IDepot): Promise<boolean> {
     try {
-      for (const userDepot of user.depots) {
-        if (userDepot.id === depotId) {
-          return true;
-        }
+      const { creator, admins, users } = depot;
+      const collaborators = [creator, ...admins, ...users];
+      if (!collaborators.includes(user.email)) {
+        throw new ForbiddenException();
       }
-      return false;
+      return true;
     } catch (error) {
       throw error;
     }
   }
 
   // Update
-  async updateDepotAdmins(user: IUser, depot: IDepot): Promise<boolean> {
+  async addAdmins(user: IUser, depot: IDepot): Promise<boolean> {
     try {
-      for (const admin of depot.admins) {
-        if (admin === user.email) return true;
+      if (this._isCreator(user, depot)) {
+        return true;
+      } else {
+        throw new ForbiddenException();
       }
-      return false;
     } catch (error) {
       throw error;
     }
   }
 
-  async updateDepotUsers(user: IUser, depot: IDepot): Promise<boolean> {
+  async removeAdmins(user: IUser, depot: IDepot): Promise<boolean> {
     try {
-      return this.updateDepotAdmins(user, depot);
+      if (this._isCreator(user, depot)) {
+        return true;
+      } else {
+        throw new ForbiddenException();
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addUsers(user: IUser, depot: IDepot): Promise<boolean> {
+    try {
+      if (this._isCreator(user, depot)) {
+        return true;
+      } else {
+        throw new ForbiddenException();
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeUsers(user: IUser, depot: IDepot): Promise<boolean> {
+    try {
+      if (this._isCreator(user, depot)) {
+        return true;
+      } else {
+        throw new ForbiddenException();
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async changeName(user: IUser, depot: IDepot): Promise<boolean> {
+    try {
+      return depot.creator === user.email;
     } catch (error) {
       throw error;
     }

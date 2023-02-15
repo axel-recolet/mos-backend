@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { JwtService } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
 import { Test } from '@nestjs/testing';
 import { fakeUser } from 'users/user.fake';
 import { UsersService } from 'users/users.service';

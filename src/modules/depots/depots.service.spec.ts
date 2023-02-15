@@ -20,12 +20,9 @@ jest.mock('users/users.service');
 describe('DepotsService', () => {
   let depotsService: DepotsService;
   let depotsRepo: DepotsRepository;
-  let usersService: UsersService;
   let permisService: DepotsPermission;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
-
     const moduleRef = await Test.createTestingModule({
       providers: [
         DepotsService,
@@ -37,7 +34,6 @@ describe('DepotsService', () => {
 
     depotsService = moduleRef.get(DepotsService);
     depotsRepo = moduleRef.get(DepotsRepository);
-    usersService = moduleRef.get(UsersService);
     permisService = moduleRef.get(DepotsPermission);
   });
 
@@ -80,7 +76,7 @@ describe('DepotsService', () => {
     it('should throw an ForbiddenException when user is not allow to create depot', async () => {
       const permisSpy = jest
         .spyOn(permisService, 'createDepot')
-        .mockResolvedValue(false);
+        .mockRejectedValue(new ForbiddenException());
 
       const result = depotsService.create(createDepotDto, user);
 
@@ -106,5 +102,5 @@ describe('DepotsService', () => {
     });
   });
 
-  describe('Name of the group', () => {});
+  //describe('Name of the group', () => {});
 });

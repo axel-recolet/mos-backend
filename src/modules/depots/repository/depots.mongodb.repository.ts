@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, QueryOptions } from 'mongoose';
 import { DepotEntity as Depot } from './depot.entity';
 import { DepotDocument } from './depot.entity';
 import { IDepotsRepository } from './depotsRepository.interface';
 import { CreateDepotDto } from '../dto';
 import { IDepot } from '../depot.interface';
+import { Email } from 'src/utils/email.type';
 
 @Injectable()
 export class DepotsRepository implements IDepotsRepository {
@@ -23,20 +24,101 @@ export class DepotsRepository implements IDepotsRepository {
   }
 
   async findById(depotId: string): Promise<IDepot | undefined> {
-    const depotEntity = await this._depotsRepo.findById(depotId);
-    return depotEntity?.toObject();
+    try {
+      const depotEntity = await this._depotsRepo.findById(depotId);
+      return depotEntity?.toObject();
+    } catch (error) {
+      throw error;
+    }
   }
 
   // Update
-  async addAdmins(depotId: string, adminIds: string[]): Promise<void> {
-    await this._depotsRepo.findByIdAndUpdate(depotId, {
-      $addToSet: { admins: adminIds },
-    });
+  async addAdmins(
+    depotId: string,
+    emails: Email[],
+    options?: QueryOptions,
+  ): Promise<void> {
+    try {
+      await this._depotsRepo.findByIdAndUpdate(
+        depotId,
+        {
+          $addToSet: { admins: emails },
+        },
+        options,
+      );
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async addUsers(depotId: string, userIds: string[]): Promise<void> {
-    await this._depotsRepo.findByIdAndDelete(depotId, {
-      $addToSet: { users: userIds },
-    });
+  async removeAdmins(
+    depotId: string,
+    emails: Email[],
+    options?: QueryOptions,
+  ): Promise<IDepot | undefined> {
+    try {
+      const depotEntity = await this._depotsRepo.findByIdAndUpdate(
+        depotId,
+        {
+          $pullAll: { admins: emails },
+        },
+        options,
+      );
+      return depotEntity?.toObject();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addUsers(
+    depotId: string,
+    emails: Email[],
+    options?: QueryOptions,
+  ): Promise<IDepot | undefined> {
+    try {
+      const depotEntity = await this._depotsRepo.findByIdAndUpdate(
+        depotId,
+        {
+          $addToSet: { users: emails },
+        },
+        options,
+      );
+      return depotEntity?.toObject();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeUsers(
+    depotId: string,
+    emails: Email[],
+    options?: QueryOptions,
+  ): Promise<IDepot | undefined> {
+    try {
+      const depotEntity = await this._depotsRepo.findByIdAndUpdate(
+        depotId,
+        {
+          $pullAll: { users: emails },
+        },
+        options,
+      );
+      return depotEntity?.toObject();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async changeName(depotId: string, name: string, options?: QueryOptions) {
+    try {
+      await this._depotsRepo.findByIdAndUpdate(
+        depotId,
+        {
+          name,
+        },
+        options,
+      );
+    } catch (error) {
+      throw error;
+    }
   }
 }

@@ -4,18 +4,20 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IDepot } from '../depots/depot.interface';
 import { IUser, UsersService } from 'users';
+import { DepotsPermission } from '../depots/depots.permission';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private readonly configService: ConfigService,
+    private readonly _configService: ConfigService,
     private readonly _usersService: UsersService,
+    private readonly _depotsPermis: DepotsPermission,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: (() => {
-        const jwt = configService.getOrThrow('jwt').secret;
+        const jwt = _configService.getOrThrow('jwt').secret;
         return jwt;
       })(),
     });
@@ -26,6 +28,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const user = await this._usersService.findById(payload.id);
     if (!user) throw new UnauthorizedException();
+
+    for (const [i, depot] of Object.entries(user.depots)) {
+      const islinked = await this._depotsPermis
+        .getDepot(user, depot)
+        .catch((error) => false);
+      if (!islinked) {
+        delete user.depots[i];
+      }
+    }
 
     const { id, email, depots, creditCard } = user;
     return { id, email, depots, creditCard };

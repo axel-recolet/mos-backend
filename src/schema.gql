@@ -34,6 +34,7 @@ type Mutation {
 }
 
 type Query {
+  depot(id: String!): Depot
   item(id: String!): Item
   storage(id: String!): Storage
 }

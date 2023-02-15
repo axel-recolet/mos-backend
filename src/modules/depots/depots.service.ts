@@ -30,8 +30,7 @@ export class DepotsService {
       await validateOrReject(createDepotDto);
 
       // Permission
-      const isAllow = await this._permission.createDepot(user);
-      if (!isAllow) throw new ForbiddenException();
+      await this._permission.createDepot(user);
 
       const newDepot = {
         creator: user.id,
@@ -49,13 +48,11 @@ export class DepotsService {
   // Read
   async findById(depotId: string, user: IUser): Promise<IDepot | undefined> {
     try {
-      // permission
-      await (async () => {
-        const isAllow = await this._permission.getDepot(user, depotId);
-        if (!isAllow) throw new ForbiddenException();
-      })();
-
       const depot = await this._depotsRepo.findById(depotId);
+      if (!depot) return depot;
+
+      // permission
+      await this._permission.getDepot(user, depot);
 
       return depot;
     } catch (error) {
@@ -63,22 +60,68 @@ export class DepotsService {
     }
   }
 
+  // Update
+  async changeName(
+    depotId: string,
+    name: string,
+    user: IUser,
+  ): Promise<IDepot> {
+    try {
+      const depot = await this._depotsRepo.findById(depotId);
+      if (!depot) throw new ForbiddenException();
+
+      // Permission
+      await this._permission.changeName(user, depot);
+
+      this._depotsRepo.changeName(depotId, name);
+
+      return {
+        ...depot,
+        name,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async addAdmins(
     depotId: string,
-    adminIds: string[],
+    emails: string[],
     user: IUser,
-  ): Promise<void> {
+  ): Promise<IDepot> {
     try {
+      const depot = await this._depotsRepo.findById(depotId);
+      if (!depot) throw new ForbiddenException();
+
       // Permission
-      await (async () => {
-        const depot = await this._depotsRepo.findById(depotId);
-        if (!depot) throw new ForbiddenException();
+      await this._permission.addAdmins(user, depot);
 
-        const isAllow = await this._permission.updateDepotAdmins(user, depot);
-        if (!isAllow) throw new ForbiddenException();
-      })();
+      this._depotsRepo.addAdmins(depotId, emails);
 
-      await this._depotsRepo.addAdmins(depotId, adminIds);
+      return {
+        ...depot,
+        admins: Array.from(new Set([...depot.admins, ...emails])),
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeAdmins(
+    depotId: string,
+    emails: string[],
+    user: IUser,
+  ): Promise<IDepot> {
+    try {
+      const depot = await this._depotsRepo.findById(depotId);
+      if (!depot) throw new ForbiddenException();
+
+      // Permission
+      await this._permission.removeAdmins(user, depot);
+
+      return (await this._depotsRepo.removeAdmins(depotId, emails, {
+        returnOriginal: false,
+      })) as IDepot;
     } catch (error) {
       throw error;
     }
@@ -86,19 +129,44 @@ export class DepotsService {
 
   async addUsers(
     depotId: string,
-    userIds: string[],
+    emails: string[],
     user: IUser,
-  ): Promise<void> {
-    // Permission
-    await (async () => {
+  ): Promise<IDepot> {
+    try {
       const depot = await this._depotsRepo.findById(depotId);
       if (!depot) throw new ForbiddenException();
 
-      const isAllow = await this._permission.updateDepotUsers(user, depot);
-      if (!isAllow) throw new ForbiddenException();
-    })();
+      // Permission
+      await this._permission.addUsers(user, depot);
 
-    await this._depotsRepo.addUsers(depotId, userIds);
+      const updatedDepot = await this._depotsRepo.addUsers(depotId, emails, {
+        returnOriginal: false,
+      });
+
+      return updatedDepot as IDepot;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeUsers(
+    depotId: string,
+    emails: string[],
+    user: IUser,
+  ): Promise<IDepot> {
+    try {
+      const depot = await this._depotsRepo.findById(depotId);
+      if (!depot) throw new ForbiddenException();
+
+      // Permission
+      await this._permission.removeUsers(user, depot);
+
+      return (await this._depotsRepo.removeUsers(depotId, emails, {
+        returnOriginal: false,
+      })) as IDepot;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async isPremium(depot: IDepot) {

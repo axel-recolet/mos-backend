@@ -1,7 +1,7 @@
 import * as request from 'supertest';
 import { INestApplication } from '@nestjs/common';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { Document, Model, Types } from 'mongoose';
+import { Document, Model } from 'mongoose';
 import { DepotDocument, DepotEntity, IDepot } from 'depots';
 import { AppModule } from 'src/modules/app/app.module';
 import { Test } from '@nestjs/testing';
@@ -9,6 +9,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { faker } from '@faker-js/faker';
 import { fakeUser, UserDocument, UserEntity } from 'users';
 import { JwtService } from '@nestjs/jwt';
+import { fakeDepot } from 'depots/depot.fake';
 
 // env
 process.env.PORT = '3000';
@@ -21,11 +22,17 @@ describe('Depots (e2e)', () => {
   let depotModel: Model<DepotDocument>;
   let userModel: Model<UserDocument>;
 
-  const user = fakeUser();
+  let userEntity: Document<unknown, any, UserEntity> & UserEntity;
+  let jwt: string;
+  let depot: Omit<IDepot, 'id' | 'dueDate'>;
 
-  beforeEach(async () => {
+  console.time('test');
+
+  beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
     const mongoUri = mongod.getUri();
+
+    console.timeLog('test', 'mongo');
 
     process.env.MONGODB_URI = mongoUri;
 
@@ -33,8 +40,12 @@ describe('Depots (e2e)', () => {
       imports: [AppModule],
     }).compile();
 
+    console.timeLog('test', 'app');
+
     app = moduleFixture.createNestApplication();
     await app.init();
+
+    console.timeLog('test', 'app.init');
 
     jwtService = app.get(JwtService);
     userModel = app.get<Model<UserDocument>>(getModelToken(UserEntity.name));
@@ -42,26 +53,84 @@ describe('Depots (e2e)', () => {
   });
 
   afterEach(async () => {
+    await Promise.all([userModel.deleteMany({}), depotModel.deleteMany({})]);
+  });
+
+  afterAll(async () => {
     await Promise.all([app.close(), mongod.stop({ force: true })]);
+    console.timeLog('test', 'end');
   });
 
   describe('create', () => {
-    let user: Document<unknown, any, UserEntity> & UserEntity;
-    let jwt: string;
-    let depot: Omit<IDepot, 'id' | 'dueDate'>;
-
     beforeEach(async () => {
-      user = await userModel.create(fakeUser({ id: undefined }));
-      jwt = jwtService.sign({ id: user.id });
+      userEntity = await userModel.create(fakeUser({ id: undefined }));
+      jwt = jwtService.sign({ id: userEntity.id });
       depot = {
         name: faker.company.name(),
-        creator: user.id,
+        creator: userEntity.id,
         admins: [faker.internet.email()],
         users: [faker.internet.email()],
       };
     });
 
-    it('should return depot', async () => {
+    // Validation
+    it('should throw when a admin or user is not an Email', async () => {
+      depot.admins.push(faker.name.firstName());
+      depot.users.push(faker.name.firstName());
+
+      const {
+        body: { errors },
+      } = await request(app.getHttpServer())
+        .post('/graphql')
+        .set({ Authorization: `Bearer ${jwt}` })
+        .send({
+          query: `mutation {
+            createDepot(
+              name: "${depot.name}",
+              admins: [ ${depot.admins.map((admin) => `"${admin}", `)}],
+              users: [ ${depot.users.map((user) => `"${user}", `)}]
+            ) {
+              id,
+            }
+          }`,
+        });
+
+      expect(errors[0].extensions.response.statusCode).toBe(400);
+      expect(errors[0].extensions.response.message[0]).toBe(
+        'each value in admins must be an email',
+      );
+      expect(errors[0].extensions.response.message[1]).toBe(
+        'each value in users must be an email',
+      );
+    });
+
+    // Permission
+    it('should throw an error when user is not allow to create a depot', async () => {
+      await userEntity.updateOne({ $set: { creditCard: undefined } });
+
+      const {
+        body: { data, errors },
+      } = await request(app.getHttpServer())
+        .post('/graphql')
+        .set({ Authorization: `Bearer ${jwt}` })
+        .send({
+          query: `mutation {
+            createDepot(
+              name: "${depot.name}",
+              admins: [ ${depot.admins.map((admin) => `"${admin}", `)}],
+              users: [ ${depot.users.map((user) => `"${user}", `)}]
+            ) {
+              id,
+            }
+          }`,
+        });
+
+      expect(data).toBeNull();
+      expect(errors[0].extensions.response.statusCode).toBe(403);
+    });
+
+    // All work
+    it('should create depot', async () => {
       const {
         body: {
           data: { createDepot: body },
@@ -90,28 +159,83 @@ describe('Depots (e2e)', () => {
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('dueDate');
     });
+  });
 
-    it('should throw when a admin or user is not an Email', async () => {
-      depot.admins.push(faker.name.firstName());
+  describe('get', () => {
+    beforeEach(async () => {
+      userEntity = await userModel.create(fakeUser({ id: undefined }));
+      jwt = jwtService.sign({ id: userEntity.id });
+    });
+
+    it('should throw an ForbiddenException when depot is not linked to the user', async () => {
+      const depotEntity = (
+        await depotModel.create(fakeDepot({ id: undefined }))
+      ).toObject();
 
       const {
-        body: { errors },
+        body: { data, errors },
       } = await request(app.getHttpServer())
         .post('/graphql')
         .set({ Authorization: `Bearer ${jwt}` })
         .send({
-          query: `mutation {
-            createDepot(
-              name: "${depot.name}",
-              admins: [ ${depot.admins.map((admin) => `"${admin}", `)}],
-              users: [ ${depot.users.map((user) => `"${user}", `)}]
-            ) {
+          query: `{
+            depot( id: "${depotEntity.id}") {
               id,
             }
           }`,
         });
 
-      expect(errors[0].extensions.response.statusCode).toBe(400);
+      expect(errors[0].extensions.response.statusCode).toBe(403);
+    });
+
+    it("should throw an ForbiddenException when user is linked to a which he doesn't have authorization", async () => {
+      const depotEntity = (
+        await depotModel.create(fakeDepot({ id: undefined }))
+      ).toObject();
+
+      await userEntity.updateOne({ $addToSet: { depots: depotEntity.id } });
+
+      const {
+        body: { data, errors },
+      } = await request(app.getHttpServer())
+        .post('/graphql')
+        .set({ Authorization: `Bearer ${jwt}` })
+        .send({
+          query: `{
+            depot( id: "${depotEntity.id}") {
+              name,
+            }
+          }`,
+        });
+
+      expect(errors[0].extensions.response.statusCode).toBe(403);
+    });
+
+    it("should return depot's name", async () => {
+      const depotEntity = (
+        await depotModel.create(
+          fakeDepot({
+            users: [faker.internet.email(), userEntity.email],
+          }),
+        )
+      ).toObject();
+      await userEntity.updateOne({ $addToSet: { depots: depotEntity.id } });
+
+      const {
+        body: { data },
+      } = await request(app.getHttpServer())
+        .post('/graphql')
+        .set({ Authorization: `Bearer ${jwt}` })
+        .send({
+          query: `{
+            depot( id: "${depotEntity.id}") {
+              id,
+              name,
+            }
+          }`,
+        });
+
+      expect(data.depot.name).toBe(depotEntity.name);
     });
   });
 });

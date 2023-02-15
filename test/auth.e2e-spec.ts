@@ -126,25 +126,10 @@ describe('Auth (e2e)', () => {
       await userModel.create(fakeUser({ ...userDto, creditCard: undefined }));
     });
 
-    it('should return access_token', async () => {
-      const { body } = await request(app.getHttpServer())
-        .post('/graphql')
-        .send({
-          query: `mutation {
-              login(
-                username: "${userDto.email}",
-                password: "${userDto.password}"
-              ) {
-                access_token
-              }
-            }`,
-        });
-
-      expect(body.data.login).toHaveProperty('access_token');
-    });
-
     it('should throw when the password is wrong', async () => {
-      const { body } = await request(app.getHttpServer())
+      const {
+        body: { errors },
+      } = await request(app.getHttpServer())
         .post('/graphql')
         .send({
           query: `mutation {
@@ -157,7 +142,28 @@ describe('Auth (e2e)', () => {
             }`,
         });
 
-      expect(body.errors[0].extensions.response.statusCode).toEqual(401);
+      expect(errors[0].extensions.response.statusCode).toEqual(401);
+    });
+
+    it('should return access_token', async () => {
+      const {
+        body: {
+          data: { login },
+        },
+      } = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `mutation {
+              login(
+                username: "${userDto.email}",
+                password: "${userDto.password}"
+              ) {
+                access_token
+              }
+            }`,
+        });
+      console.log(login);
+      expect(login).toHaveProperty('access_token');
     });
 
     it("should throw when the email doen't exist", async () => {
